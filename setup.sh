@@ -20,7 +20,18 @@ if ! command -v /opt/homebrew/bin/python3.9 &> /dev/null; then
 fi
 
 echo "✅ Node.js: $(node --version)"
-echo "✅ Python: $(/opt/homebrew/bin/python3.9 --version)"
+# Find python3.9 in PATH or fallback to Homebrew path
+if command -v python3.9 &> /dev/null; then
+    PYTHON=$(command -v python3.9)
+elif [ -x /opt/homebrew/bin/python3.9 ]; then
+    PYTHON=/opt/homebrew/bin/python3.9
+else
+    echo "❌ Python 3.9 not found. Please install Python 3.9 (e.g., with: brew install python@3.9)"
+    exit 1
+fi
+
+echo "✅ Node.js: $(node --version)"
+echo "✅ Python: $($PYTHON --version)"
 
 # Install Node.js dependencies
 echo "📦 Installing Node.js dependencies..."
