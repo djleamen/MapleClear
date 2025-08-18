@@ -4,7 +4,7 @@ pydantic>=2.9
 httpx==0.25.2
 aiosqlite==0.19.0
 transformers>=4.48.2
-torch==2.3.0
+torch==2.8.0
 vllm>=0.8.0
 llama-cpp-python==0.2.11
 peft==0.6.2
