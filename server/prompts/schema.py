@@ -13,7 +13,6 @@ class SimplificationResponse(BaseModel):
         default_factory=list, description="List of changes made")
     cautions: List[str] = Field(
         default_factory=list, description="Warnings or uncertainties")
-    readability_grade: float = Field(...,
     readability_grade: Optional[float] = Field(
         None, description="Estimated reading grade level")
     original_grade: float = Field(...,
