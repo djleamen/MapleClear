@@ -111,7 +111,7 @@ TODO:
 ### Prerequisites
 
 * Node 20+, pnpm or npm
-* Python 3.10+
+* Python 3.9
 * One of:
 
   * `llama.cpp` build with CPU or Metal
@@ -268,7 +268,77 @@ Add your specific sources and licenses to:
 ---
 
 ## Repo Structure
-TODO
+
+```
+mapleclear/
+├── LICENSE                    # Apache 2.0 license
+├── README.md                  # This file
+├── Makefile                   # Build and demo commands
+├── package.json               # Root package configuration
+├── .gitignore                 # Git ignore patterns
+│
+├── extension/                 # Browser extension (MV3)
+│   ├── package.json           # Extension dependencies
+│   ├── vite.config.ts         # Build configuration
+│   ├── tsconfig.json          # TypeScript configuration
+│   ├── src/
+│   │   ├── manifest.json      # Extension manifest
+│   │   ├── background.ts      # Service worker
+│   │   ├── content-script.ts  # Page injection script
+│   │   ├── popup.html         # Extension popup
+│   │   ├── popup.ts           # Popup functionality
+│   │   ├── panel.html         # Injected panel template
+│   │   └── content-styles.css # Panel styling
+│   └── dist/                  # Built extension (generated)
+│
+├── server/                    # Local inference daemon
+│   ├── requirements.txt       # Python dependencies
+│   ├── __init__.py            # Package init
+│   ├── app.py                 # FastAPI main application
+│   ├── prompts/
+│   │   ├── __init__.py
+│   │   └── schema.py          # Request/response models
+│   └── backends/
+│       ├── __init__.py
+│       ├── base.py            # Abstract backend interface
+│       ├── llama_cpp.py       # llama.cpp implementation
+│       ├── vllm_backend.py    # vLLM implementation
+│       ├── llama.cpp/         # llama.cpp build directory
+│       └── vllm/              # vLLM configuration
+│
+├── data/                      # Local data storage
+│   └── terms.sqlite           # Terminology cache (generated)
+│
+├── data-cards/                # Data source documentation
+│   ├── terms.md               # Terminology attribution
+│   ├── plain-style.md         # Style guide sources
+│   └── indigenous.md          # Indigenous language ethics
+│
+├── finetune/                  # Model fine-tuning scripts
+│   ├── train_plain_lora.py    # Plain language adapter
+│   └── train_inuktitut_lora.py # Indigenous language adapter
+│
+├── tools/                     # Development utilities
+│   ├── seed_terms.py          # Database population
+│   └── readability.py         # Text analysis tools
+│
+├── demo/                      # Demo and testing
+│   ├── pages/                 # Sample government pages
+│   │   └── canada-benefits.html
+│   └── script.sh              # Demo automation
+│
+└── tests/                     # Test suite
+    └── test_basic.py          # Basic functionality tests
+```
+
+### Key Components
+
+- **Extension**: Manifest V3 browser extension with React UI
+- **Server**: FastAPI daemon with pluggable AI backends
+- **Data**: SQLite terminology cache for offline operation
+- **Fine-tuning**: LoRA adapters for specialized models
+- **Tools**: Database seeding and text analysis utilities
+- **Demo**: Sample content for testing and demonstration
 
 ---
 

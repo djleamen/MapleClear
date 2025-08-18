@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MapleClear Panel</title>
+  <link rel="stylesheet" href="panel.css">
+</head>
+<body>
+  <div class="panel-header">
+    <h2 class="panel-title">🍁 MapleClear</h2>
+    <button class="close-button" aria-label="Close panel">&times;</button>
+  </div>
+  
+  <div class="panel-content">
+    <div class="selection-info hidden">No text selected</div>
+    
+    <div class="action-buttons">
+      <button id="simplify-selection" class="action-button primary">
+        <span class="icon">📝</span>
+        <div>
+          <div class="button-title">Simplify Selection</div>
+          <div class="button-subtitle">Make selected text easier to read</div>
+        </div>
+      </button>
+      
+      <button id="simplify-page" class="action-button primary">
+        <span class="icon">📄</span>
+        <div>
+          <div class="button-title">Simplify Page</div>
+          <div class="button-subtitle">Simplify the main content</div>
+        </div>
+      </button>
+      
+      <div class="translate-section">
+        <label for="translate-select" class="translate-label">Translate to:</label>
+        <select id="translate-select" class="translate-dropdown">
+          <option value="fr">French (Français)</option>
+          <option value="es">Spanish (Español)</option>
+          <option value="zh">Chinese (中文)</option>
+        </select>
+        <button id="translate" class="action-button secondary">
+          <span class="icon">🔄</span>
+          <div>
+            <div class="button-title">Translate</div>
+            <div class="button-subtitle">Translate to selected language</div>
+          </div>
+        </button>
+      </div>
+      
+      <div class="experimental-section">
+        <label class="experimental-label">
+          <input type="checkbox" id="enable-indigenous" class="experimental-checkbox">
+          <span class="experimental-text">Experimental: Indigenous Languages</span>
+        </label>
+        <div id="indigenous-options" class="indigenous-options hidden">
+          <label for="indigenous-select">Translate to:</label>
+          <select id="indigenous-select" class="indigenous-dropdown">
+            <option value="iu">Inuktitut (ᐃᓄᒃᑎᑐᑦ)</option>
+            <option value="cr">Cree (ᓀᐦᐃᔭᐍᐏᐣ)</option>
+            <option value="oj">Ojibwe (ᐊᓂᔑᓈᐯᒧᐎᓐ)</option>
+          </select>
+          <button id="translate-indigenous" class="action-button experimental">
+            <span class="icon">🎯</span>
+            <div>
+              <div class="button-title">Translate (Experimental)</div>
+              <div class="button-subtitle">Community-guided translation</div>
+            </div>
+          </button>
+          <div class="experimental-warning">
+            ⚠️ This feature is experimental. English text remains visible alongside translation.
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="results-container hidden">
+      <div class="view-toggle">
+        <button id="toggle-view" class="toggle-button">📖 Side-by-Side View</button>
+      </div>
+      
+      <div class="results-content">
+        <div class="comparison-view hidden">
+          <div class="comparison-pane">
+            <h3 class="pane-title">📄 Original</h3>
+            <div class="original-content"></div>
+          </div>
+          <div class="comparison-pane">
+            <h3 class="pane-title">✨ Improved</h3>
+            <div class="improved-content"></div>
+          </div>
+        </div>
+        
+        <div class="single-view">
+          <div class="result-content"></div>
+        </div>
+        
+        <div class="result-metadata">
+          <div class="rationale-section hidden">
+            <h4>🔍 Changes Made:</h4>
+            <ul class="rationale-list"></ul>
+          </div>
+          
+          <div class="cautions-section hidden">
+            <h4>⚠️ Please Note:</h4>
+            <ul class="cautions-list"></ul>
+          </div>
+          
+          <div class="action-buttons-bottom">
+            <button id="copy-result" class="secondary-button">📋 Copy Result</button>
+            <button id="print-result" class="secondary-button">🖨️ Print</button>
+            <button id="new-action" class="primary-button">➕ New Action</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="help-text">
+      <p>💡 <strong>Hover over ACRONYMS</strong> for instant definitions</p>
+      <p>Select text and click "Simplify Selection", or use "Simplify Page" to process all content.</p>
+      <p>Need help? Click the MapleClear extension icon in your browser toolbar.</p>
+    </div>
+  </div>
+  
+  <script src="browser-polyfill.js"></script>
+  <script src="panel.js"></script>
+</body>
+</html>

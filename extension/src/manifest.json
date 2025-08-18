@@ -1,0 +1,52 @@
+{
+  "manifest_version": 3,
+  "name": "MapleClear",
+  "version": "0.1.0",
+  "description": "Simplify Canadian government webpages into plain language with local AI",
+  "icons": {
+    "16": "icons/logo.png",
+    "32": "icons/logo.png",
+    "48": "icons/logo.png",
+    "128": "icons/logo.png"
+  },
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:11434/*",
+    "https://*.canada.ca/*",
+    "https://*.gc.ca/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.canada.ca/*",
+        "https://*.gc.ca/*",
+        "http://localhost:*/*",
+        "file:///*"
+      ],
+      "js": ["content-script.js"],
+      "css": ["content-styles.css"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "MapleClear - Simplify government text"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["panel.html", "icons/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://127.0.0.1:11434"
+  }
+}
