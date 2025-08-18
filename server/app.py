@@ -131,7 +131,13 @@ async def get_terms_db():
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize the inference backend on startup."""
+from contextlib import asynccontextmanager
+
+@app.lifespan
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage startup and shutdown events for the FastAPI app."""
+    # Startup logic
     print("🍁 Starting MapleClear server...")
     print(f"📍 Backend: {Config.BACKEND}")
     print(f"📁 Model path: {Config.MODEL_PATH}")
