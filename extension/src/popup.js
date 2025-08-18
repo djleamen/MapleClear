@@ -45,7 +45,9 @@ class MapleClearPopup {
 
     document.getElementById('help-link')?.addEventListener('click', (e) => {
       e.preventDefault();
-      browser.tabs.create({ url: 'https://github.com/djleamen/MapleClear#readme' });
+      if (window.confirm('You are about to open an external site (GitHub). Continue?')) {
+        browser.tabs.create({ url: 'https://github.com/djleamen/MapleClear#readme' });
+      }
     });
 
     document.getElementById('feedback-link')?.addEventListener('click', (e) => {
