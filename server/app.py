@@ -169,7 +169,12 @@ async def lifespan(app: FastAPI):
 async def shutdown_event():
     """Clean up resources on shutdown."""
     if hasattr(app.state, 'backend') and app.state.backend:
-        await app.state.backend.cleanup()
+    try:
+        yield
+    finally:
+        # Shutdown logic
+        if hasattr(app.state, 'backend') and app.state.backend:
+            await app.state.backend.cleanup()
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check(backend: InferenceBackend = Depends(get_backend)):
