@@ -17,7 +17,8 @@ class SimplificationResponse(BaseModel):
         None, description="Estimated reading grade level")
     original_grade: float = Field(...,
     original_grade: Optional[float] = Field(
-        None, description="Original reading grade level")
+        original_grade: Optional[float] = Field(
+            None, description="Original reading grade level")
 
 
 class TranslationResponse(BaseModel):
