@@ -130,7 +130,6 @@ async def get_terms_db():
 
 
 @app.on_event("startup")
-async def startup_event():
 from contextlib import asynccontextmanager
 
 @app.lifespan
