@@ -165,7 +165,6 @@ async def shutdown_event():
     if hasattr(app.state, 'backend') and app.state.backend:
         await app.state.backend.cleanup()
 
-
 @app.get("/health", response_model=HealthResponse)
 async def health_check(backend: InferenceBackend = Depends(get_backend)):
     """Health check endpoint with model information."""
