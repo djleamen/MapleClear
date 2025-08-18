@@ -1,0 +1,204 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Build outputs
+extension/dist/
+extension/build/
+server/dist/
+server/build/
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Model files (large and user-specific)
+*.gguf
+*.bin
+*.safetensors
+models/
+.cache/
+~/.mapleclear/
+
+# Database files
+*.sqlite
+*.db
+
+# Environment files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Extension development
+extension/web-ext-artifacts/
+extension/*.zip
+
+# Server development
+server/*.pid
+
+# Test output
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editor backup files
+*~
+*.bak
+*.orig
+
+# Compiled files
+*.pyc
+*.pyo
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+
+# llama.cpp build artifacts
+server/backends/llama.cpp/main
+server/backends/llama.cpp/*.o
+server/backends/llama.cpp/Makefile.local
+
+# Fine-tuning outputs
+finetune/runs/
+finetune/wandb/
+finetune/outputs/
+*.pt
+*.pth
+
+# Additional AI/ML patterns
+*.ckpt
+*.model
+checkpoints/
+mlruns/
+experiments/
+runs/
+
+# Extension development artifacts
+extension/web-ext-artifacts/
+extension/*.xpi
+extension/*.crx
+
+# Additional log patterns
+*.log.*
+logs/
+*.access.log
+*.error.log
+
+# Temporary and backup files
+*.tmp
+*.temp
+*~
+.#*
+\#*#

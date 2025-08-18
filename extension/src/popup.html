@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MapleClear</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="app" class="popup-container">
+    <header class="popup-header">
+      <div class="logo">
+        <img src="icons/logo.png" alt="MapleClear" class="logo-icon">
+        <h1>MapleClear</h1>
+      </div>
+      <div class="status" id="status">
+        <span class="status-indicator" id="status-indicator"></span>
+        <span id="status-text">Ready</span>
+      </div>
+    </header>
+
+    <main class="popup-main">
+      <div class="action-selector" id="action-selector">
+        <h3>Choose an action:</h3>
+        <button class="action-button primary" data-action="simplify">
+          <span class="icon">📝</span>
+          <div>
+            <div class="button-title">Simplify</div>
+            <div class="button-subtitle">Make this page easier to read</div>
+          </div>
+        </button>
+        
+        <button class="action-button secondary" data-action="translate">
+          <span class="icon">🌐</span>
+          <div>
+            <div class="button-title">Translate</div>
+            <div class="button-subtitle">Translate to another language</div>
+          </div>
+        </button>
+      </div>
+
+      <div class="language-selector hidden" id="language-selector">
+        <h3>Select language:</h3>
+        
+        <div class="language-section">
+          <h4>🇨🇦 Official & Common Languages</h4>
+          <div class="language-grid">
+            <button class="language-button" data-lang="fr" data-name="French">
+              🇫🇷 Français
+            </button>
+            <button class="language-button" data-lang="zh" data-name="Chinese">
+              🇨🇳 中文 (Mandarin)
+            </button>
+            <button class="language-button" data-lang="pa" data-name="Punjabi">
+              🇮🇳 ਪੰਜਾਬੀ (Punjabi)
+            </button>
+            <button class="language-button" data-lang="es" data-name="Spanish">
+              🇪🇸 Español
+            </button>
+            <button class="language-button" data-lang="ar" data-name="Arabic">
+              🇸🇦 العربية (Arabic)
+            </button>
+            <button class="language-button" data-lang="tl" data-name="Tagalog">
+              🇵🇭 Tagalog
+            </button>
+            <button class="language-button" data-lang="it" data-name="Italian">
+              🇮🇹 Italiano
+            </button>
+            <button class="language-button" data-lang="de" data-name="German">
+              🇩🇪 Deutsch
+            </button>
+            <button class="language-button" data-lang="ur" data-name="Urdu">
+              🇵🇰 اردو (Urdu)
+            </button>
+            <button class="language-button" data-lang="ru" data-name="Russian">
+              🇷🇺 Русский
+            </button>
+          </div>
+        </div>
+
+        <div class="experimental-section">
+          <h4>🧪 Experimental: Indigenous Languages</h4>
+          <p class="disclaimer">Community-guided translations. English text remains visible alongside translations.</p>
+          <div class="language-grid">
+            <button class="language-button experimental" data-lang="iu" data-name="Inuktitut">
+              🏔️ ᐃᓄᒃᑎᑐᑦ (Inuktitut)
+            </button>
+            <button class="language-button experimental" data-lang="cr" data-name="Cree">
+              🌲 ᓀᐦᐃᔭᐍᐏᐣ (Cree)
+            </button>
+            <button class="language-button experimental" data-lang="oj" data-name="Ojibwe">
+              🦌 ᐊᓂᔑᓈᐯᒧᐎᓐ (Ojibwe)
+            </button>
+            <button class="language-button experimental" data-lang="mic" data-name="Mi'kmaq">
+              🌊 Mi'kmaq
+            </button>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="secondary-button" id="back-button">← Back</button>
+        </div>
+      </div>
+
+      <div class="processing-status hidden" id="processing-status">
+        <div class="spinner"></div>
+        <p id="processing-text">Processing page...</p>
+        <p class="processing-detail">This may take a few moments</p>
+      </div>
+    </main>
+
+    <footer class="popup-footer">
+      <div class="page-info" id="page-info">
+        <span id="current-domain">Loading...</span>
+      </div>
+      
+      <div class="footer-links">
+        <a href="#" id="help-link">Help</a>
+        <a href="#" id="feedback-link">Feedback</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="browser-polyfill.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

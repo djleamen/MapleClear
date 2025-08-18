@@ -1,0 +1,48 @@
+{
+  "name": "mapleclear",
+  "version": "0.1.0",
+  "description": "Privacy-first browser extension that simplifies Canadian government webpages",
+  "type": "module",
+  "scripts": {
+    "build": "npm run build:extension && npm run build:server",
+    "build:extension": "cd extension && npm run build",
+    "build:server": "cd server && python -m build",
+    "dev": "npm run dev:extension",
+    "dev:extension": "cd extension && npm run dev",
+    "test": "npm run test:extension && npm run test:server",
+    "test:extension": "cd extension && npm test",
+    "test:server": "cd server && pytest",
+    "lint": "npm run lint:extension && npm run lint:server",
+    "lint:extension": "cd extension && npm run lint",
+    "lint:server": "cd server && ruff check .",
+    "typecheck": "npm run typecheck:extension && npm run typecheck:server",
+    "typecheck:extension": "cd extension && npm run typecheck",
+    "typecheck:server": "cd server && mypy .",
+    "demo": "make demo"
+  },
+  "keywords": [
+    "browser-extension",
+    "accessibility",
+    "plain-language",
+    "government",
+    "translation",
+    "privacy",
+    "local-ai"
+  ],
+  "author": "MapleClear Contributors",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/djleamen/MapleClear.git"
+  },
+  "bugs": {
+    "url": "https://github.com/djleamen/MapleClear/issues"
+  },
+  "homepage": "https://github.com/djleamen/MapleClear#readme",
+  "workspaces": [
+    "extension"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
+}
