@@ -44,7 +44,7 @@ fi
 
 # Set up Python virtual environment
 echo "🐍 Setting up Python environment..."
-/opt/homebrew/bin/python3.9 -m venv .venv
+$PYTHON -m venv .venv
 source .venv/bin/activate
 
 # Install Python dependencies
