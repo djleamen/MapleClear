@@ -16,7 +16,15 @@ export default defineConfig({
       output: {
         entryFileNames: '[name].js',
         chunkFileNames: '[name].js',
-        assetFileNames: '[name].[ext]'
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name?.endsWith('.html')) {
+            return '[name].[ext]'
+          }
+          if (assetInfo.name?.endsWith('.css')) {
+            return '[name].[ext]'
+          }
+          return 'assets/[name]-[hash].[ext]'
+        }
       },
       external: []
     },

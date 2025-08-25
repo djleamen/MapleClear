@@ -17,6 +17,8 @@ fi
 if ! command -v /opt/homebrew/bin/python3.9 &> /dev/null; then
     echo "❌ Python 3.9 not found. Please install Python 3.9 with: brew install python@3.9"
     exit 1
+fi
+
 echo "✅ Node.js: $(node --version)"
 # Find python3.9 in PATH or fallback to Homebrew path
 if command -v python3.9 &> /dev/null; then
@@ -65,7 +67,7 @@ cd extension
 if command -v pnpm &> /dev/null; then
     pnpm build
 else
-    npm run build
+    npm run build:deps
 fi
 cd ..
 

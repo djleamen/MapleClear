@@ -4,8 +4,10 @@
   "description": "MapleClear browser extension for simplifying government webpages",
   "type": "module",
   "scripts": {
-    "dev": "cp src/manifest.json dist/ && cp src/content-styles.css dist/ && vite build --watch",
-    "build": "tsc && vite build && cp src/manifest.json dist/ && cp src/content-styles.css dist/",
+    "dev": "npm run build:deps && vite build --watch",
+    "build": "npm run build:deps && tsc && vite build && npm run build:post",
+    "build:deps": "mkdir -p dist && cp src/manifest.json dist/ && cp src/content-styles.css dist/ && cp src/browser-polyfill.js dist/ && cp src/popup.js dist/ && cp src/panel.js dist/",
+    "build:post": "mv dist/src/popup.html dist/ && mv dist/src/panel.html dist/ && rmdir dist/src || true",
     "preview": "vite preview",
     "test": "vitest",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",

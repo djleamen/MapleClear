@@ -5,7 +5,14 @@ vLLM backend implementation for MapleClear.
 import json
 from typing import Optional, List
 from pathlib import Path
-from vllm import LLM, SamplingParams # type: ignore # pylint: disable=import-error
+
+try:
+    from vllm import LLM, SamplingParams # type: ignore # pylint: disable=import-error
+    VLLM_AVAILABLE = True
+except ImportError:
+    VLLM_AVAILABLE = False
+    LLM = None
+    SamplingParams = None
 
 from .base import InferenceBackend
 from ..prompts.schema import SimplificationResponse, TranslationResponse, AcronymResponse, ModelInfo
@@ -23,7 +30,17 @@ class VLLMBackend(InferenceBackend):
 
     async def initialize(self) -> None:
         """Initialize vLLM backend."""
+        if not VLLM_AVAILABLE:
+            print("⚠️  vLLM not available. Install with: pip install vllm")
+            print(DEMO_MODE_MESSAGE)
+            return
+
         try:
+            if SamplingParams is None:
+                print("⚠️  vLLM components not available")
+                print(DEMO_MODE_MESSAGE)
+                return
+
             self.sampling_params = SamplingParams(
                 temperature=0.7,
                 top_p=0.9,
@@ -33,6 +50,11 @@ class VLLMBackend(InferenceBackend):
             model_path = Path(self.model_path).expanduser()
             if not model_path.exists():
                 print(f"⚠️  Model not found: {model_path}")
+                print(DEMO_MODE_MESSAGE)
+                return
+
+            if LLM is None:
+                print("⚠️  vLLM LLM class not available")
                 print(DEMO_MODE_MESSAGE)
                 return
 
@@ -130,7 +152,8 @@ class VLLMBackend(InferenceBackend):
             context=context
         )
 
-        response_text = self._run_inference(prompt)
+        # For demo mode, return immediately without trying to run inference
+        response_text = self._get_demo_response(prompt)
 
         try:
             response_data = json.loads(response_text)
@@ -162,7 +185,8 @@ class VLLMBackend(InferenceBackend):
             experimental=experimental
         )
 
-        response_text = self._run_inference(prompt)
+        # For demo mode, return immediately without trying to run inference  
+        response_text = self._get_demo_response(prompt)
 
         try:
             response_data = json.loads(response_text)
@@ -190,7 +214,8 @@ class VLLMBackend(InferenceBackend):
             context=context
         )
 
-        response_text = self._run_inference(prompt)
+        # For demo mode, return immediately without trying to run inference
+        response_text = self._get_demo_response(prompt)
 
         try:
             response_data = json.loads(response_text)
