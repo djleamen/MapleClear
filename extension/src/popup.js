@@ -140,44 +140,96 @@ class MapleClearPopup {
 
   async processPage() {
     this.showStep('processing-status');
-    
-    const processingText = document.getElementById('processing-text');
-    if (processingText) {
-      if (this.selectedAction === 'simplify') {
-        processingText.textContent = 'Simplifying page content...';
-      } else if (this.selectedAction === 'translate') {
-        processingText.textContent = `Translating to ${this.selectedLanguage.name}...`;
-      }
-    }
+    this.updateProcessingText();
 
     try {
-      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-      const tab = tabs[0];
-
-      if (!tab) {
-        throw new Error('No active tab found');
-      }
-
-      if (this.serverStatus === 'disconnected') {
-        throw new Error('MapleClear server is not running');
-      }
-
-      const response = await browser.tabs.sendMessage(tab.id, {
-        type: 'CREATE_SPLIT_SCREEN',
-        action: this.selectedAction,
-        language: this.selectedLanguage?.code || 'en',
-        languageName: this.selectedLanguage?.name || 'English'
-      });
-
-      if (response && response.success) {
-        window.close();
-      } else {
-        throw new Error(response?.error || 'Failed to create split screen');
-      }
+      const tab = await this.getActiveTab();
+      this.validateTab(tab);
+      
+      const response = await this.sendMessageToTab(tab.id);
+      this.handleSuccessResponse(response);
 
     } catch (error) {
-      console.error('Processing failed:', error);
+      await this.handleProcessingError(error);
+    }
+  }
+
+  updateProcessingText() {
+    const processingText = document.getElementById('processing-text');
+    if (!processingText) return;
+
+    if (this.selectedAction === 'simplify') {
+      processingText.textContent = 'Simplifying page content...';
+    } else if (this.selectedAction === 'translate') {
+      processingText.textContent = `Translating to ${this.selectedLanguage.name}...`;
+    }
+  }
+
+  async getActiveTab() {
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    return tabs[0];
+  }
+
+  validateTab(tab) {
+    if (!tab) {
+      throw new Error('No active tab found');
+    }
+
+    if (this.serverStatus === 'disconnected') {
+      throw new Error('MapleClear server is not running');
+    }
+  }
+
+  async sendMessageToTab(tabId) {
+    return await browser.tabs.sendMessage(tabId, {
+      type: 'CREATE_SPLIT_SCREEN',
+      action: this.selectedAction,
+      language: this.selectedLanguage?.code || 'en',
+      languageName: this.selectedLanguage?.name || 'English'
+    });
+  }
+
+  handleSuccessResponse(response) {
+    if (response && response.success) {
+      window.close();
+    } else {
+      throw new Error(response?.error || 'Failed to create split screen');
+    }
+  }
+
+  async handleProcessingError(error) {
+    console.error('Processing failed:', error);
+    
+    if (this.isContentScriptError(error)) {
+      await this.tryInjectContentScript(error);
+    } else {
       this.showError(error.message);
+    }
+  }
+
+  isContentScriptError(error) {
+    return error.message.includes('Could not establish connection') || 
+           error.message.includes('Receiving end does not exist');
+  }
+
+  async tryInjectContentScript(originalError) {
+    try {
+      console.log('Content script not found, injecting...');
+      const tab = await this.getActiveTab();
+      
+      await browser.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ['browser-polyfill.js', 'content-script.js']
+      });
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const response = await this.sendMessageToTab(tab.id);
+      this.handleSuccessResponse(response);
+      
+    } catch (injectionError) {
+      console.error('Content script injection failed:', injectionError);
+      this.showError('This page is not supported or cannot be modified');
     }
   }
 

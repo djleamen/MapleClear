@@ -5,7 +5,7 @@
  * for Canadian government webpages.
  */
 
-import browser from 'webextension-polyfill';
+declare const browser: any;
 
 interface Config {
   API_BASE: string;

@@ -6,22 +6,27 @@ Canadian government text. Supports multiple backends (llama.cpp, vLLM) and
 maintains a local terminology cache.
 """
 
-import re
 import os
-from typing import List
+import re
+from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import List
 
-from fastapi import FastAPI, HTTPException, Depends # type: ignore # pylint: disable=import-error
-from fastapi.middleware.cors import CORSMiddleware # type: ignore # pylint: disable=import-error
-from fastapi.staticfiles import StaticFiles # type: ignore # pylint: disable=import-error
-from pydantic import BaseModel, Field # type: ignore # pylint: disable=import-error
 import aiosqlite  # type: ignore # pylint: disable=import-error
-import uvicorn # type: ignore # pylint: disable=import-error
+import uvicorn  # type: ignore # pylint: disable=import-error
+from fastapi import (Depends,  # type: ignore # pylint: disable=import-error
+                     FastAPI, HTTPException)
+from fastapi.middleware.cors import CORSMiddleware  # type: ignore # pylint: disable=import-error
+from fastapi.staticfiles import StaticFiles  # type: ignore # pylint: disable=import-error
+from pydantic import (BaseModel,  # type: ignore # pylint: disable=import-error
+                      Field)
 
-from .prompts.schema import SimplificationResponse, TranslationResponse, AcronymResponse, ModelInfo
 from .backends.base import InferenceBackend
 from .backends.llama_cpp import LlamaCppBackend
 from .backends.vllm_backend import VLLMBackend
+from .prompts.schema import (AcronymResponse, ModelInfo,
+                             SimplificationResponse, TranslationResponse)
+
 
 class Config:
     """Configuration for the MapleClear server."""
@@ -71,70 +76,8 @@ class HealthResponse(BaseModel):
     backend: str
     adapters: List[str]
 
-app = FastAPI(
-    title="MapleClear Inference Server",
-    description="Local AI inference for simplifying Canadian government text",
-    version="0.1.0"
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["chrome-extension://*",
-                   "moz-extension://*", "http://localhost:*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-def get_backend() -> InferenceBackend:
-    """Dependency to get the inference backend."""
-    if app.state.backend is None:
-        raise HTTPException(
-            status_code=503, detail="Inference backend not ready")
-    return app.state.backend
-
-
-async def get_terms_db():
-    """Dependency to get terminology database connection."""
-    db_path = Path(Config.TERMS_DB)
-    if not db_path.exists():
-        db_path.parent.mkdir(parents=True, exist_ok=True)
-        async with aiosqlite.connect(db_path) as db:
-            await db.execute("""
-                CREATE TABLE IF NOT EXISTS acronyms (
-                    id INTEGER PRIMARY KEY,
-                    acronym TEXT UNIQUE,
-                    expansion TEXT,
-                    definition TEXT,
-                    source_url TEXT,
-                    language TEXT DEFAULT 'en',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            await db.execute("""
-                CREATE TABLE IF NOT EXISTS terms (
-                    id INTEGER PRIMARY KEY,
-                    term_en TEXT,
-                    term_fr TEXT,
-                    definition_en TEXT,
-                    definition_fr TEXT,
-                    category TEXT,
-                    official BOOLEAN DEFAULT FALSE,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            await db.commit()
-
-    return aiosqlite.connect(db_path)
-
-
-@app.on_event("startup")
-from contextlib import asynccontextmanager
-
-@app.lifespan
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(fastapi_app: FastAPI):
     """Manage startup and shutdown events for the FastAPI app."""
     # Startup logic
     print("🍁 Starting MapleClear server...")
@@ -144,19 +87,19 @@ async def lifespan(app: FastAPI):
 
     try:
         if Config.BACKEND == "llama.cpp":
-            app.state.backend = LlamaCppBackend(
+            fastapi_app.state.backend = LlamaCppBackend(
                 model_path=Config.MODEL_PATH,
                 adapters=Config.ADAPTERS
             )
         elif Config.BACKEND == "vllm":
-            app.state.backend = VLLMBackend(
+            fastapi_app.state.backend = VLLMBackend(
                 model_path=Config.MODEL_PATH,
                 adapters=Config.ADAPTERS
             )
         else:
             raise ValueError(f"Unknown backend: {Config.BACKEND}")
 
-        await app.state.backend.initialize()
+        await fastapi_app.state.backend.initialize()
         print(
             f"✅ MapleClear server ready on http://{Config.HOST}:{Config.PORT}")
 
@@ -164,17 +107,39 @@ async def lifespan(app: FastAPI):
         print(f"❌ Failed to initialize backend: {e}")
         raise
 
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Clean up resources on shutdown."""
-    if hasattr(app.state, 'backend') and app.state.backend:
     try:
         yield
     finally:
         # Shutdown logic
-        if hasattr(app.state, 'backend') and app.state.backend:
-            await app.state.backend.cleanup()
+        if hasattr(fastapi_app.state, 'backend') and fastapi_app.state.backend:
+            await fastapi_app.state.backend.cleanup()
+        if hasattr(fastapi_app.state, 'backend') and fastapi_app.state.backend:
+            await fastapi_app.state.backend.cleanup()
+
+app = FastAPI(
+    title="MapleClear Inference Server",
+    description="Local AI inference for simplifying Canadian government text",
+    version="0.1.0",
+    lifespan=lifespan
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins for local development
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+def get_backend() -> InferenceBackend:
+    """Dependency to get the current backend instance."""
+    return app.state.backend
+
+async def get_terms_db():
+    """Get database connection for terms."""
+    db_path = Path(Config.TERMS_DB)
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    return await aiosqlite.connect(db_path)
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check(backend: InferenceBackend = Depends(get_backend)):
@@ -228,22 +193,30 @@ async def translate_text(
 
 
 @app.post("/acronyms", response_model=AcronymResponse)
-async def expand_acronyms(
-    request: AcronymRequest,
-    backend: InferenceBackend = Depends(get_backend)
-):
+async def expand_acronyms(request: AcronymRequest):
     """Find and expand acronyms in text."""
     try:
-        async with await get_terms_db() as db:
-            potential_acronyms = re.findall(r'\b[A-Z]{2,}\b', request.text)
+        # Simple regex to find potential acronyms
+        potential_acronyms = re.findall(r'\b[A-Z]{2,}\b', request.text)
 
-            found_acronyms = []
-            for acronym in set(potential_acronyms):
-                async with db.execute(
-                    "SELECT expansion, definition, source_url FROM acronyms WHERE acronym = ?",
-                    (acronym,)
-                ) as cursor:
-                    row = await cursor.fetchone()
+        found_acronyms = []
+
+        # Try to connect to database
+        try:
+            db_path = Path(Config.TERMS_DB)
+            db_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Use a simpler synchronous approach to avoid threading issues
+            import sqlite3
+            with sqlite3.connect(db_path) as conn:
+                cursor = conn.cursor()
+
+                for acronym in set(potential_acronyms):
+                    cursor.execute(
+                        "SELECT expansion, definition, source_url FROM acronyms WHERE acronym = ?",
+                        (acronym,)
+                    )
+                    row = cursor.fetchone()
                     if row:
                         found_acronyms.append({
                             "acronym": acronym,
@@ -253,15 +226,10 @@ async def expand_acronyms(
                             "confidence": 1.0,
                             "source": "local_cache"
                         })
-
-            unknown_acronyms = [a for a in potential_acronyms if not any(
-                f["acronym"] == a for f in found_acronyms)]
-            if unknown_acronyms:
-                ai_response = await backend.expand_acronyms(
-                    text=request.text,
-                    context=request.context
-                )
-                found_acronyms.extend(ai_response.acronyms)
+        except Exception as db_error:
+            print(f"Database error: {db_error}")
+            # If database fails, just return empty list
+            pass
 
         return AcronymResponse(acronyms=found_acronyms)
 

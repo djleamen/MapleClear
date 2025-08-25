@@ -3,13 +3,6 @@ uvicorn[standard]==0.24.0
 pydantic>=2.9
 httpx==0.25.2
 aiosqlite==0.19.0
-transformers>=4.48.2
-torch>=2.6.0,<2.9.0
-vllm>=0.8.0
-llama-cpp-python==0.2.11
-peft==0.6.2
-datasets==2.14.6
-evaluate==0.4.1
 textstat==0.7.3
 ruff==0.1.6
 mypy==1.7.1

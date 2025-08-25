@@ -15,10 +15,8 @@ class SimplificationResponse(BaseModel):
         default_factory=list, description="Warnings or uncertainties")
     readability_grade: Optional[float] = Field(
         None, description="Estimated reading grade level")
-    original_grade: float = Field(...,
     original_grade: Optional[float] = Field(
-        original_grade: Optional[float] = Field(
-            None, description="Original reading grade level")
+        None, description="Original reading grade level")
 
 
 class TranslationResponse(BaseModel):

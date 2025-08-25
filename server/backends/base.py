@@ -6,8 +6,8 @@ from typing import List, Optional
 
 import textstat # type: ignore # pylint: disable=import-error
 
-from ..prompts.schema import (AcronymResponse, ModelInfo,
-                              SimplificationResponse, TranslationResponse)
+from ..prompts.schema import (AcronymResponse, ModelInfo, # type: ignore #pylint: disable=no-name-in-module
+                              SimplificationResponse, TranslationResponse) # type: ignore #pylint: disable=no-name-in-module
 
 
 class InferenceBackend(ABC):
