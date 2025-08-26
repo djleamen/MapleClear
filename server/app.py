@@ -25,6 +25,8 @@ from pydantic import (BaseModel,  # type: ignore # pylint: disable=import-error
 from .backends.base import InferenceBackend
 from .backends.llama_cpp import LlamaCppBackend
 from .backends.vllm_backend import VLLMBackend
+from .backends.huggingface_backend import HuggingFaceBackend
+from .backends.lmstudio_backend import LMStudioBackend
 from .prompts.schema import (AcronymResponse, ModelInfo,
                              SimplificationResponse, TranslationResponse)
 
@@ -32,8 +34,8 @@ from .prompts.schema import (AcronymResponse, ModelInfo,
 class Config:
     """Configuration for the MapleClear server."""
     MODEL_PATH = os.getenv("MAPLECLEAR_MODEL_PATH",
-                           "~/.mapleclear/models/gpt-oss-20b/")
-    BACKEND = os.getenv("MAPLECLEAR_BACKEND", "vllm")  # or "llama.cpp"
+                           "openai/gpt-oss-20b")  # Use the 20B gpt-oss model for hackathon
+    BACKEND = os.getenv("MAPLECLEAR_BACKEND", "huggingface")  # Default to HF backend
     ADAPTERS = os.getenv("MAPLECLEAR_ADAPTERS", "").split(
         ",") if os.getenv("MAPLECLEAR_ADAPTERS") else []
     TERMS_DB = os.getenv("MAPLECLEAR_TERMS_DB", "data/terms.sqlite")
@@ -94,6 +96,16 @@ async def lifespan(fastapi_app: FastAPI):
             )
         elif Config.BACKEND == "vllm":
             fastapi_app.state.backend = VLLMBackend(
+                model_path=Config.MODEL_PATH,
+                adapters=Config.ADAPTERS
+            )
+        elif Config.BACKEND == "huggingface":
+            fastapi_app.state.backend = HuggingFaceBackend(
+                model_path=Config.MODEL_PATH,
+                adapters=Config.ADAPTERS
+            )
+        elif Config.BACKEND == "lmstudio":
+            fastapi_app.state.backend = LMStudioBackend(
                 model_path=Config.MODEL_PATH,
                 adapters=Config.ADAPTERS
             )
@@ -193,7 +205,7 @@ async def translate_text(
             status_code=500, detail=f"Translation failed: {str(e)}") from e
 
 
-@app.post("/acronyms", response_model=AcronymResponse)
+@app.post("/expand-acronyms", response_model=AcronymResponse)
 async def expand_acronyms(request: AcronymRequest):
     """Find and expand acronyms in text."""    
     try:

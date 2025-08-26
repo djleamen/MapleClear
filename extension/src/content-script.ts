@@ -717,7 +717,7 @@ class MapleClearContentScript {
       }
 
       const result = await response.json();
-      const processedText = result.result || result.simplified || result.translated || 'Processing completed';
+      const processedText = result.plain || result.result || result.simplified || result.translated || 'Processing completed';
 
       const paneContent = processedPane.querySelector('.pane-content');
       if (paneContent) {
