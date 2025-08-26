@@ -185,7 +185,7 @@ class VLLMBackend(InferenceBackend):
             experimental=experimental
         )
 
-        # For demo mode, return immediately without trying to run inference  
+        # For demo mode, return immediately without trying to run inference
         response_text = self._get_demo_response(prompt)
 
         try:

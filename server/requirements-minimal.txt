@@ -3,6 +3,8 @@ uvicorn[standard]==0.24.0
 pydantic>=2.9
 httpx==0.25.2
 aiosqlite==0.19.0
+transformers>=4.21.0
+torch>=1.13.0
 textstat==0.7.3
 ruff==0.1.6
 mypy==1.7.1
