@@ -129,6 +129,7 @@ async def test_mock_backend():
     assert "simplified" in result.plain.lower()
     assert len(result.rationale) > 0
 
+
 def test_readability_calculation():
     """Test readability grade calculation."""
     backend = MockBackend("test")

@@ -11,6 +11,7 @@ import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import List
+import sqlite3
 
 import aiosqlite  # type: ignore # pylint: disable=import-error
 import uvicorn  # type: ignore # pylint: disable=import-error
@@ -194,7 +195,7 @@ async def translate_text(
 
 @app.post("/acronyms", response_model=AcronymResponse)
 async def expand_acronyms(request: AcronymRequest):
-    """Find and expand acronyms in text."""
+    """Find and expand acronyms in text."""    
     try:
         # Simple regex to find potential acronyms
         potential_acronyms = re.findall(r'\b[A-Z]{2,}\b', request.text)
@@ -207,7 +208,6 @@ async def expand_acronyms(request: AcronymRequest):
             db_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Use a simpler synchronous approach to avoid threading issues
-            import sqlite3
             with sqlite3.connect(db_path) as conn:
                 cursor = conn.cursor()
 
@@ -226,10 +226,9 @@ async def expand_acronyms(request: AcronymRequest):
                             "confidence": 1.0,
                             "source": "local_cache"
                         })
-        except Exception as db_error:
+        except (sqlite3.Error, OSError) as db_error:
             print(f"Database error: {db_error}")
             # If database fails, just return empty list
-            pass
 
         return AcronymResponse(acronyms=found_acronyms)
 
