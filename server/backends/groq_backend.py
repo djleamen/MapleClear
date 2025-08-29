@@ -99,11 +99,14 @@ class GroqBackend(InferenceBackend):
                         f"Groq API error: {status_code} - {response_text}") from e
                 elif HTTPX_AVAILABLE and httpx is not None and isinstance(e, httpx.HTTPError):
                     raise GroqAPIError(f"Groq API error: {e}") from e
-
-            # Generic fallback for any other exception
-            raise GroqConnectionError(
-                f"Failed to connect to Groq API: {e}") from e
-
+                else:
+                    # Generic fallback for any other exception with a 'response' attribute
+                    raise GroqConnectionError(
+                        f"Failed to connect to Groq API: {e}") from e
+            else:
+                # Generic fallback for any other exception
+                raise GroqConnectionError(
+                    f"Failed to connect to Groq API: {e}") from e
     async def cleanup(self) -> None:
         """Cleanup Groq backend."""
         if self.client:
