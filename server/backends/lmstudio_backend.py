@@ -450,7 +450,7 @@ class LMStudioBackend(InferenceBackend):
         if template_path.exists():
             return template_path.read_text(encoding="utf-8")
 
-        templates = {# pylint: disable=line-too-long
+        templates = {
             # pylint: disable=line-too-long
             "simplify": """You are a plain language expert specializing in simplifying Canadian government text.
 
