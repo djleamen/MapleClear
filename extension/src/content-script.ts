@@ -789,130 +789,147 @@ class MapleClearContentScript {
 
   private async processContentForSplitScreen(action: string, language: string, content: string, processedPane: HTMLElement): Promise<void> {
     try {
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = content;
-      const textContent = tempDiv.textContent || tempDiv.innerText || '';
-
+      const textContent = this.extractTextFromHtml(content);
       console.log('🔧 Processing content for split screen:', { action, language, contentLength: textContent.length });
 
-      const endpoint = action === 'simplify' ? '/simplify' : '/translate';
-      const requestData = action === 'simplify' 
-        ? { text: textContent, target_grade: 7, preserve_acronyms: true }
-        : { text: textContent, target_language: language, preserve_terms: true };
-
-      console.log('🚀 Making API request to:', `${CONFIG.API_BASE}${endpoint}`);
-
-      const response = await fetch(`${CONFIG.API_BASE}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestData)
-      });
-
-      if (!response.ok) {
-        throw new Error(`Server responded with status ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log('📦 API response received:', result);
-
-      let processedText = '';
+      const result = await this.fetchProcessedContent(action, language, textContent);
+      const processedText = this.extractProcessedText(result);
       
-      // Handle different response types
-      if (result.plain && result.plain.trim()) {
-        processedText = result.plain;
-        console.log('✅ Using result.plain:', processedText.substring(0, 100) + '...');
-      } else if (result.translated !== undefined) {
-        processedText = result.translated || 'Translation completed but no content returned';
-        console.log('✅ Using result.translated:', processedText.substring(0, 100) + '...');
-      } else if (result.result) {
-        processedText = result.result;
-        console.log('✅ Using result.result:', processedText.substring(0, 100) + '...');
-      } else if (result.simplified) {
-        processedText = result.simplified;
-        console.log('✅ Using result.simplified:', processedText.substring(0, 100) + '...');
-      } else {
-        // Fallback: show the raw JSON response for debugging
-        processedText = `Debug: ${JSON.stringify(result, null, 2)}`;
-        console.log('⚠️ No recognized content field in response, showing raw response');
-      }
-
-      const paneContent = processedPane.querySelector('.pane-content');
-      if (paneContent) {
-        console.log('🎨 Formatting content for display...');
-        console.log('🔍 Raw processedText:', processedText);
-        
-        // Simplify content formatting - just use the text directly with minimal processing
-        let finalContent = '';
-        if (processedText?.trim()) {
-          // Even simpler approach: just put the text directly with basic styling
-          finalContent = `<div style="color: #000000 !important; font-size: 18px !important; line-height: 1.6 !important; padding: 20px !important; background: #ffffff !important; border: 2px solid red !important;">${processedText.replace(/\n/g, '<br>')}</div>`;
-        } else {
-          finalContent = '<div style="color: #ff0000 !important; font-size: 18px !important; background: #ffff00 !important; padding: 20px !important; border: 2px solid red !important;"><em>No content was returned from the server</em></div>';
-        }
-
-        console.log('📝 Final formatted content length:', finalContent.length);
-        console.log('📝 Final formatted content preview:', finalContent.substring(0, 300));
-        
-        // Clear any existing content first
-        paneContent.innerHTML = '';
-        console.log('🎨 Cleared existing content');
-        
-        // Set the new content
-        paneContent.innerHTML = finalContent;
-        console.log('🎨 Set new content, innerHTML length:', paneContent.innerHTML.length);
-        
-        // Force visible styling with maximum specificity
-        const htmlElement = paneContent as HTMLElement;
-        htmlElement.style.cssText = `
-          color: #343a40 !important;
-          font-size: 16px !important;
-          line-height: 1.7 !important;
-          visibility: visible !important;
-          display: block !important;
-          opacity: 1 !important;
-          background-color: white !important;
-          min-height: 100px !important;
-          width: 100% !important;
-          overflow: visible !important;
-          position: relative !important;
-          z-index: 1 !important;
-        `;
-        console.log('🎨 Applied styling');
-        
-        // Force all child elements to be visible
-        const allElements = htmlElement.querySelectorAll('*');
-        allElements.forEach((el: Element) => {
-          const element = el as HTMLElement;
-          element.style.cssText = `
-            color: #343a40 !important;
-            visibility: visible !important;
-            display: block !important;
-            opacity: 1 !important;
-          `;
-        });
-        console.log('🎨 Forced visibility on', allElements.length, 'child elements');
-        
-        console.log('🎨 Content set, pane content innerHTML length:', paneContent.innerHTML.length);
-        console.log('🎨 Pane content text content:', paneContent.textContent?.substring(0, 200));
-
-        this.setupAcronymDetectionInElement(paneContent as HTMLElement);
-        console.log('✅ Content displayed and acronym detection set up');
-      } else {
-        console.error('❌ Could not find pane content element');
-      }
+      await this.displayProcessedContent(processedText, processedPane);
 
     } catch (error) {
-      console.error('Processing failed:', error);
-      const paneContent = processedPane.querySelector('.pane-content');
-      if (paneContent) {
-        paneContent.innerHTML = `
-          <div class="error-message">
-            <h3>❌ Processing Error</h3>
-            <p>${error instanceof Error ? error.message : 'Unknown error occurred'}</p>
-            <p><small>Make sure the MapleClear server is running on port 11434</small></p>
-          </div>
-        `;
-      }
+      this.handleProcessingError(error, processedPane);
+    }
+  }
+
+  private extractTextFromHtml(content: string): string {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = content;
+    return tempDiv.textContent || tempDiv.innerText || '';
+  }
+
+  private async fetchProcessedContent(action: string, language: string, textContent: string): Promise<any> {
+    const endpoint = action === 'simplify' ? '/simplify' : '/translate';
+    const requestData = action === 'simplify' 
+      ? { text: textContent, target_grade: 7, preserve_acronyms: true }
+      : { text: textContent, target_language: language, preserve_terms: true };
+
+    console.log('🚀 Making API request to:', `${CONFIG.API_BASE}${endpoint}`);
+
+    const response = await fetch(`${CONFIG.API_BASE}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server responded with status ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('📦 API response received:', result);
+    return result;
+  }
+
+  private extractProcessedText(result: any): string {
+    if (result.plain?.trim()) {
+      console.log('✅ Using result.plain:', result.plain.substring(0, 100) + '...');
+      return result.plain;
+    }
+    
+    if (result.translated !== undefined) {
+      const text = result.translated || 'Translation completed but no content returned';
+      console.log('✅ Using result.translated:', text.substring(0, 100) + '...');
+      return text;
+    }
+    
+    if (result.result) {
+      console.log('✅ Using result.result:', result.result.substring(0, 100) + '...');
+      return result.result;
+    }
+    
+    if (result.simplified) {
+      console.log('✅ Using result.simplified:', result.simplified.substring(0, 100) + '...');
+      return result.simplified;
+    }
+    
+    console.log('⚠️ No recognized content field in response, showing raw response');
+    return `Debug: ${JSON.stringify(result, null, 2)}`;
+  }
+
+  private async displayProcessedContent(processedText: string, processedPane: HTMLElement): Promise<void> {
+    const paneContent = processedPane.querySelector('.pane-content');
+    if (!paneContent) {
+      console.error('❌ Could not find pane content element');
+      return;
+    }
+
+    console.log('🎨 Formatting content for display...');
+    const finalContent = this.formatContentForDisplay(processedText);
+    
+    this.updatePaneContent(paneContent as HTMLElement, finalContent);
+    this.setupAcronymDetectionInElement(paneContent as HTMLElement);
+    console.log('✅ Content displayed and acronym detection set up');
+  }
+
+  private formatContentForDisplay(processedText: string): string {
+    if (processedText?.trim()) {
+      return `<div style="color: #000000 !important; font-size: 18px !important; line-height: 1.6 !important; padding: 20px !important; background: #ffffff !important; border: 2px solid red !important;">${processedText.replace(/\n/g, '<br>')}</div>`;
+    }
+    
+    return '<div style="color: #ff0000 !important; font-size: 18px !important; background: #ffff00 !important; padding: 20px !important; border: 2px solid red !important;"><em>No content was returned from the server</em></div>';
+  }
+
+  private updatePaneContent(paneContent: HTMLElement, finalContent: string): void {
+    console.log('📝 Final formatted content length:', finalContent.length);
+    
+    paneContent.innerHTML = '';
+    paneContent.innerHTML = finalContent;
+    
+    this.applyContentStyling(paneContent);
+    console.log('🎨 Content set, pane content innerHTML length:', paneContent.innerHTML.length);
+  }
+
+  private applyContentStyling(paneContent: HTMLElement): void {
+    paneContent.style.cssText = `
+      color: #343a40 !important;
+      font-size: 16px !important;
+      line-height: 1.7 !important;
+      visibility: visible !important;
+      display: block !important;
+      opacity: 1 !important;
+      background-color: white !important;
+      min-height: 100px !important;
+      width: 100% !important;
+      overflow: visible !important;
+      position: relative !important;
+      z-index: 1 !important;
+    `;
+
+    const allElements = paneContent.querySelectorAll('*');
+    allElements.forEach((el: Element) => {
+      const element = el as HTMLElement;
+      element.style.cssText = `
+        color: #343a40 !important;
+        visibility: visible !important;
+        display: block !important;
+        opacity: 1 !important;
+      `;
+    });
+    console.log('🎨 Forced visibility on', allElements.length, 'child elements');
+  }
+
+  private handleProcessingError(error: unknown, processedPane: HTMLElement): void {
+    console.error('Processing failed:', error);
+    const paneContent = processedPane.querySelector('.pane-content');
+    if (paneContent) {
+      paneContent.innerHTML = `
+        <div class="error-message">
+          <h3>❌ Processing Error</h3>
+          <p>${error instanceof Error ? error.message : 'Unknown error occurred'}</p>
+          <p><small>Make sure the MapleClear server is running on port 11434</small></p>
+        </div>
+      `;
     }
   }
 

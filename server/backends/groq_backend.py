@@ -97,11 +97,12 @@ class GroqBackend(InferenceBackend):
                     response_text = getattr(response, 'text', str(e))
                     raise GroqAPIError(
                         f"Groq API error: {status_code} - {response_text}") from e
-                else:
+                elif HTTPX_AVAILABLE and httpx is not None and isinstance(e, httpx.HTTPError):
                     raise GroqAPIError(f"Groq API error: {e}") from e
-            else:
-                raise GroqConnectionError(
-                    f"Failed to connect to Groq API: {e}") from e
+
+            # Generic fallback for any other exception
+            raise GroqConnectionError(
+                f"Failed to connect to Groq API: {e}") from e
 
     async def cleanup(self) -> None:
         """Cleanup Groq backend."""
@@ -239,8 +240,8 @@ class GroqBackend(InferenceBackend):
         """Return demo responses for testing without API."""
         if "simplify" in prompt.lower():
             return json.dumps({
-                "plain": "This is a simplified version of the text. Complex terms have been replaced with simpler alternatives.",
-                "rationale": ["Replaced technical jargon", "Shortened sentences", "Used common words"],
+                "plain": "This is a simplified version of the text. Complex terms have been replaced with simpler alternatives.", # pylint: disable=line-too-long
+                "rationale": ["Replaced technical jargon", "Shortened sentences", "Used common words"], # pylint: disable=line-too-long
                 "cautions": ["Some nuance may be lost in simplification"],
                 "readability_grade": 7.2
             })
@@ -366,6 +367,7 @@ class GroqBackend(InferenceBackend):
     def _load_prompt_template(self, task: str) -> str:
         """Load prompt template for the given task."""
         templates = {
+            # pylint: disable=line-too-long
             "simplify": """Simplify this Canadian government text to Grade {target_grade} reading level. Keep it accurate and preserve acronyms.
 
 Text: {text}
