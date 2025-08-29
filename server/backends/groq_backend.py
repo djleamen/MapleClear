@@ -104,9 +104,9 @@ class GroqBackend(InferenceBackend):
                     raise GroqConnectionError(
                         f"Failed to connect to Groq API: {e}") from e
             else:
-                # Generic fallback for any other exception
-                raise GroqConnectionError(
-                    f"Failed to connect to Groq API: {e}") from e
+                # Generic fallback for any other unexpected exception
+                raise GroqError(
+                    f"Unexpected error while connecting to Groq API: {e}") from e
     async def cleanup(self) -> None:
         """Cleanup Groq backend."""
         if self.client:
