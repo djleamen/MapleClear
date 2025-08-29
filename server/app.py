@@ -13,6 +13,13 @@ from pathlib import Path
 from typing import List
 import sqlite3
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv  # type: ignore
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not available, use system environment
+
 import aiosqlite  # type: ignore # pylint: disable=import-error
 import uvicorn  # type: ignore # pylint: disable=import-error
 from fastapi import (Depends,  # type: ignore # pylint: disable=import-error
@@ -27,6 +34,7 @@ from .backends.llama_cpp import LlamaCppBackend
 from .backends.vllm_backend import VLLMBackend
 from .backends.huggingface_backend import HuggingFaceBackend
 from .backends.lmstudio_backend import LMStudioBackend
+from .backends.groq_backend import GroqBackend
 from .prompts.schema import (AcronymResponse, ModelInfo,
                              SimplificationResponse, TranslationResponse)
 
@@ -35,7 +43,7 @@ class Config:
     """Configuration for the MapleClear server."""
     MODEL_PATH = os.getenv("MAPLECLEAR_MODEL_PATH",
                            "openai/gpt-oss-20b")  # Use the 20B gpt-oss model for hackathon
-    BACKEND = os.getenv("MAPLECLEAR_BACKEND", "huggingface")  # Default to HF backend
+    BACKEND = os.getenv("MAPLECLEAR_BACKEND", "groq")  # Default to Groq backend for testing
     ADAPTERS = os.getenv("MAPLECLEAR_ADAPTERS", "").split(
         ",") if os.getenv("MAPLECLEAR_ADAPTERS") else []
     TERMS_DB = os.getenv("MAPLECLEAR_TERMS_DB", "data/terms.sqlite")
@@ -106,6 +114,11 @@ async def lifespan(fastapi_app: FastAPI):
             )
         elif Config.BACKEND == "lmstudio":
             fastapi_app.state.backend = LMStudioBackend(
+                model_path=Config.MODEL_PATH,
+                adapters=Config.ADAPTERS
+            )
+        elif Config.BACKEND == "groq":
+            fastapi_app.state.backend = GroqBackend(
                 model_path=Config.MODEL_PATH,
                 adapters=Config.ADAPTERS
             )

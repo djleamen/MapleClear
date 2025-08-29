@@ -42,7 +42,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["panel.html", "icons/*"],
+      "resources": ["panel.html", "icons/*", "content-styles.css", "browser-polyfill.js", "popup.js", "panel.js"],
       "matches": ["<all_urls>"]
     }
   ],

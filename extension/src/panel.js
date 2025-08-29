@@ -147,7 +147,19 @@ class MapleClearPanel {
 
       const result = await this.callServer(actionType, textToProcess, targetLanguage);
       
-      this.improvedContent = result.result || result.simplified || result.translated || '';
+      // Handle different response types properly
+      if (result.plain && result.plain.trim()) {
+        this.improvedContent = result.plain;
+      } else if (result.translated !== undefined) {
+        this.improvedContent = result.translated || 'Translation completed but no content returned';
+      } else if (result.result) {
+        this.improvedContent = result.result;
+      } else if (result.simplified) {
+        this.improvedContent = result.simplified;
+      } else {
+        this.improvedContent = 'Processing completed but no content returned';
+      }
+      
       this.showResults(result);
 
     } catch (error) {

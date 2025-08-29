@@ -119,6 +119,107 @@ GOVERNMENT_ACRONYMS = [
         "definition": "Agence fédérale responsable de la protection et de la promotion de la santé publique",
         "source_url": "https://www.canada.ca/fr/sante-publique.html",
         "language": "fr"
+    },
+    # Health Canada and Food Standards acronyms
+    {
+        "acronym": "HC",
+        "expansion": "Health Canada",
+        "definition": "Federal department responsible for health policy, regulation, and public health",
+        "source_url": "https://www.canada.ca/en/health-canada.html",
+        "language": "en"
+    },
+    {
+        "acronym": "FSANZ",
+        "expansion": "Food Standards Australia New Zealand",
+        "definition": "Bi-national government agency responsible for food safety standards",
+        "source_url": "https://www.foodstandards.gov.au/",
+        "language": "en"
+    },
+    {
+        "acronym": "GM",
+        "expansion": "Genetically Modified",
+        "definition": "Foods that have been altered using genetic engineering techniques",
+        "source_url": "https://www.canada.ca/en/health-canada.html",
+        "language": "en"
+    },
+    {
+        "acronym": "OECD",
+        "expansion": "Organisation for Economic Co-operation and Development",
+        "definition": "International organization promoting economic development and trade",
+        "source_url": "https://www.oecd.org/",
+        "language": "en"
+    },
+    {
+        "acronym": "OCDE",
+        "expansion": "Organisation de coopération et de développement économiques",
+        "definition": "Organisation internationale promouvant le développement économique et le commerce",
+        "source_url": "https://www.oecd.org/fr/",
+        "language": "fr"
+    },
+    # Medical and Drug acronyms
+    {
+        "acronym": "CDSA",
+        "expansion": "Controlled Drugs and Substances Act",
+        "definition": "Federal legislation controlling drugs and substances in Canada",
+        "source_url": "https://laws-lois.justice.gc.ca/eng/acts/c-38.8/",
+        "language": "en"
+    },
+    {
+        "acronym": "NCR",
+        "expansion": "Narcotic Control Regulations",
+        "definition": "Federal regulations controlling narcotic substances",
+        "source_url": "https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.%2C_c._1041/",
+        "language": "en"
+    },
+    {
+        "acronym": "FDR",
+        "expansion": "Food and Drug Regulations",
+        "definition": "Federal regulations controlling food and drug safety in Canada",
+        "source_url": "https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.%2C_c._870/",
+        "language": "en"
+    },
+    {
+        "acronym": "PDF",
+        "expansion": "Portable Document Format",
+        "definition": "File format for presenting documents consistently across platforms",
+        "source_url": "https://www.adobe.com/acrobat/about-adobe-pdf.html",
+        "language": "en"
+    },
+    # Additional common acronyms
+    {
+        "acronym": "JSON",
+        "expansion": "JavaScript Object Notation", 
+        "definition": "Data interchange format using human-readable text",
+        "source_url": "https://www.json.org/",
+        "language": "en"
+    },
+    {
+        "acronym": "WHO",
+        "expansion": "World Health Organization",
+        "definition": "United Nations agency for international health matters",
+        "source_url": "https://www.who.int/",
+        "language": "en"
+    },
+    {
+        "acronym": "OMS",
+        "expansion": "Organisation mondiale de la santé",
+        "definition": "Agence des Nations Unies pour les questions de santé internationale",
+        "source_url": "https://www.who.int/fr",
+        "language": "fr"
+    },
+    {
+        "acronym": "FAQ",
+        "expansion": "Frequently Asked Questions",
+        "definition": "Common questions and answers about a topic",
+        "source_url": "",
+        "language": "en"
+    },
+    {
+        "acronym": "FAO",
+        "expansion": "Food and Agriculture Organization",
+        "definition": "United Nations agency for food and agriculture",
+        "source_url": "https://www.fao.org/",
+        "language": "en"
     }
 ]
 
