@@ -25,21 +25,21 @@ GOVERNMENT_ACRONYMS = [
     {
         "acronym": "ARC",
         "expansion": "Agence du revenu du Canada",
-        "definition": "Agence fédérale responsable de la perception des impôts et de l'administration des prestations",
+        "definition": "Agence fédérale responsable de la perception des impôts et de l'administration des prestations", # pylint: disable=line-too-long
         "source_url": "https://www.canada.ca/fr/agence-revenu.html",
         "language": "fr"
     },
     {
         "acronym": "EI",
         "expansion": "Employment Insurance",
-        "definition": "Government program providing temporary income support for unemployed workers",
+        "definition": "Government program providing temporary income support for unemployed workers", # pylint: disable=line-too-long
         "source_url": "https://www.canada.ca/en/services/benefits/ei.html",
         "language": "en"
     },
     {
         "acronym": "AE",
         "expansion": "Assurance-emploi",
-        "definition": "Programme gouvernemental offrant un soutien temporaire du revenu aux travailleurs sans emploi",
+        "definition": "Programme gouvernemental offrant un soutien temporaire du revenu aux travailleurs sans emploi", # pylint: disable=line-too-long
         "source_url": "https://www.canada.ca/fr/services/prestations/ae.html",
         "language": "fr"
     },
@@ -61,21 +61,21 @@ GOVERNMENT_ACRONYMS = [
         "acronym": "GST",
         "expansion": "Goods and Services Tax",
         "definition": "Federal value-added tax on most goods and services",
-        "source_url": "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses.html",
+        "source_url": "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses.html", # pylint: disable=line-too-long
         "language": "en"
     },
     {
         "acronym": "TPS",
         "expansion": "Taxe sur les produits et services",
         "definition": "Taxe fédérale sur la valeur ajoutée sur la plupart des biens et services",
-        "source_url": "https://www.canada.ca/fr/agence-revenu/services/impot/entreprises/sujets/tps-tvh-entreprises.html",
+        "source_url": "https://www.canada.ca/fr/agence-revenu/services/impot/entreprises/sujets/tps-tvh-entreprises.html", # pylint: disable=line-too-long
         "language": "fr"
     },
     {
         "acronym": "HST",
         "expansion": "Harmonized Sales Tax",
         "definition": "Combined federal and provincial sales tax in participating provinces",
-        "source_url": "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses.html",
+        "source_url": "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses.html", # pylint: disable=line-too-long
         "language": "en"
     },
     {
@@ -88,7 +88,7 @@ GOVERNMENT_ACRONYMS = [
     {
         "acronym": "NAS",
         "expansion": "Numéro d'assurance sociale",
-        "definition": "Numéro à neuf chiffres nécessaire pour travailler au Canada ou accéder aux programmes gouvernementaux",
+        "definition": "Numéro à neuf chiffres nécessaire pour travailler au Canada ou accéder aux programmes gouvernementaux", # pylint: disable=line-too-long
         "source_url": "https://www.canada.ca/fr/emploi-developpement-social/services/nas.html",
         "language": "fr"
     },
@@ -116,7 +116,7 @@ GOVERNMENT_ACRONYMS = [
     {
         "acronym": "ASPC",
         "expansion": "Agence de la santé publique du Canada",
-        "definition": "Agence fédérale responsable de la protection et de la promotion de la santé publique",
+        "definition": "Agence fédérale responsable de la protection et de la promotion de la santé publique", # pylint: disable=line-too-long
         "source_url": "https://www.canada.ca/fr/sante-publique.html",
         "language": "fr"
     },
@@ -124,7 +124,7 @@ GOVERNMENT_ACRONYMS = [
     {
         "acronym": "HC",
         "expansion": "Health Canada",
-        "definition": "Federal department responsible for health policy, regulation, and public health",
+        "definition": "Federal department responsible for health policy, regulation, and public health", # pylint: disable=line-too-long
         "source_url": "https://www.canada.ca/en/health-canada.html",
         "language": "en"
     },
@@ -152,7 +152,7 @@ GOVERNMENT_ACRONYMS = [
     {
         "acronym": "OCDE",
         "expansion": "Organisation de coopération et de développement économiques",
-        "definition": "Organisation internationale promouvant le développement économique et le commerce",
+        "definition": "Organisation internationale promouvant le développement économique et le commerce", # pylint: disable=line-too-long
         "source_url": "https://www.oecd.org/fr/",
         "language": "fr"
     },

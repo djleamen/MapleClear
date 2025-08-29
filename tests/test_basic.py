@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest  # type: ignore # pylint: disable=import-error
 
 from server.backends.base import InferenceBackend
-from server.prompts.schema import ModelInfo, SimplificationResponse, TranslationResponse, AcronymResponse
+from server.prompts.schema import ModelInfo, SimplificationResponse, TranslationResponse, AcronymResponse # pylint: disable=line-too-long
 from tools.seed_terms import (GOVERNMENT_ACRONYMS, create_database,
                               seed_acronyms)
 
@@ -137,7 +137,7 @@ def test_readability_calculation():
     simple_text = "This is simple. Easy to read."
     simple_grade = backend.calculate_readability(simple_text)
 
-    complex_text = "The aforementioned administrative procedures necessitate comprehensive documentation and verification protocols."
+    complex_text = "The aforementioned administrative procedures necessitate comprehensive documentation and verification protocols." # pylint: disable=line-too-long
     complex_grade = backend.calculate_readability(complex_text)
 
     assert complex_grade > simple_grade

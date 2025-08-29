@@ -451,6 +451,7 @@ class LMStudioBackend(InferenceBackend):
             return template_path.read_text(encoding="utf-8")
 
         templates = {
+            # pylint: disable=line-too-long
             "simplify": """You are a plain language expert specializing in simplifying Canadian government text.
 
 Task: Simplify the following text to grade {target_grade} reading level while preserving meaning and official terms.

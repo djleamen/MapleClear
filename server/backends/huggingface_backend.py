@@ -5,6 +5,8 @@ Uses open-weight gpt-oss models via transformers library.
 
 import json
 import re
+import traceback
+import signal
 from typing import Optional, List
 from pathlib import Path
 from .base import InferenceBackend
@@ -81,7 +83,7 @@ class HuggingFaceBackend(InferenceBackend):
     def _setup_device_and_dtype(self) -> tuple:
         """Setup device and data type for the model."""
         # Use Metal Performance Shaders (MPS) on Apple Silicon if available
-        if torch is not None and hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        if torch is not None and hasattr(torch.backends, 'mps') and torch.backends.mps.is_available(): # pylint: disable=line-too-long
             device = "mps"
             print(f"🍎 Using Apple Silicon MPS acceleration: {device}")
         elif torch is not None and torch.cuda.is_available():
@@ -141,7 +143,7 @@ class HuggingFaceBackend(InferenceBackend):
             model_name = getattr(
                 self.model.config, '_name_or_path', self.model_path)
             num_params = sum(p.numel() for p in self.model.parameters())
-            size = f"{num_params // 1_000_000}M" if num_params < 1_000_000_000 else f"{num_params // 1_000_000_000}B"
+            size = f"{num_params // 1_000_000}M" if num_params < 1_000_000_000 else f"{num_params // 1_000_000_000}B" # pylint: disable=line-too-long
         else:
             model_name = "demo-model"
             size = "unknown"
@@ -166,7 +168,6 @@ class HuggingFaceBackend(InferenceBackend):
         except (RuntimeError, ValueError, TypeError, TimeoutError) as e:
             print(f"❌ Inference error: {e}")
             print(f"🔍 Error type: {type(e)}")
-            import traceback
             print(f"📊 Traceback: {traceback.format_exc()}")
             return self._get_demo_response(prompt)
 
@@ -191,7 +192,7 @@ class HuggingFaceBackend(InferenceBackend):
         # Truncate prompt to reduce computation time
         max_prompt_length = 128  # Even smaller for faster inference
         inputs = self.tokenizer(
-            prompt, return_tensors="pt", padding=True, truncation=True, max_length=max_prompt_length)
+            prompt, return_tensors="pt", padding=True, truncation=True, max_length=max_prompt_length) # pylint: disable=line-too-long
 
         device = next(self.model.parameters()).device
         model_dtype = next(self.model.parameters()).dtype
@@ -227,8 +228,6 @@ class HuggingFaceBackend(InferenceBackend):
                 attention_mask = None
 
             # Add timeout for generation to prevent infinite hangs
-            import signal
-
             def timeout_handler(signum, frame):
                 raise TimeoutError(
                     "Model generation timed out - using intelligent fallback for performance")
@@ -449,6 +448,7 @@ class HuggingFaceBackend(InferenceBackend):
             return template_path.read_text(encoding="utf-8")
 
         templates = {
+            # pylint: disable=line-too-long
             "simplify": """You are a plain language expert specializing in simplifying Canadian government text.
 
 Task: Simplify the following text to grade {target_grade} reading level while preserving meaning and official terms.

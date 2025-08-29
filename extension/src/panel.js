@@ -113,59 +113,76 @@ class MapleClearPanel {
     this.currentAction = actionType;
     
     try {
-      let textToProcess = '';
-      
-      if (actionType === 'simplify-selection') {
-        const selection = window.getSelection();
-        textToProcess = selection ? selection.toString().trim() : '';
-        
-        if (!textToProcess) {
-          this.showError('Please select some text first.');
-          return;
-        }
-      } else if (actionType === 'simplify-page') {
-        textToProcess = this.extractMainContent();
-      }
-
-      if (!textToProcess) {
-        this.showError('No text found to process.');
-        return;
-      }
+      const textToProcess = this.getTextToProcess(actionType);
+      if (!textToProcess) return;
 
       this.originalContent = textToProcess;
       this.showProcessing();
 
-      const translateSelect = document.getElementById('translate-select');
-      const indigenousSelect = document.getElementById('indigenous-select');
-      let targetLanguage = 'en';
-
-      if (actionType === 'translate') {
-        targetLanguage = translateSelect?.value || 'fr';
-      } else if (actionType === 'translate-indigenous') {
-        targetLanguage = indigenousSelect?.value || 'iu';
-      }
-
+      const targetLanguage = this.getTargetLanguage(actionType);
       const result = await this.callServer(actionType, textToProcess, targetLanguage);
       
-      // Handle different response types properly
-      if (result.plain && result.plain.trim()) {
-        this.improvedContent = result.plain;
-      } else if (result.translated !== undefined) {
-        this.improvedContent = result.translated || 'Translation completed but no content returned';
-      } else if (result.result) {
-        this.improvedContent = result.result;
-      } else if (result.simplified) {
-        this.improvedContent = result.simplified;
-      } else {
-        this.improvedContent = 'Processing completed but no content returned';
-      }
-      
+      this.improvedContent = this.extractContentFromResult(result);
       this.showResults(result);
 
     } catch (error) {
       console.error('Action failed:', error);
       this.showError(`Failed to ${actionType.replace('-', ' ')}: ${error.message}`);
     }
+  }
+
+  getTextToProcess(actionType) {
+    if (actionType === 'simplify-selection') {
+      const selection = window.getSelection();
+      const textToProcess = selection ? selection.toString().trim() : '';
+      
+      if (!textToProcess) {
+        this.showError('Please select some text first.');
+        return null;
+      }
+      return textToProcess;
+    }
+    
+    if (actionType === 'simplify-page') {
+      return this.extractMainContent();
+    }
+
+    const textToProcess = this.extractMainContent();
+    if (!textToProcess) {
+      this.showError('No text found to process.');
+      return null;
+    }
+    return textToProcess;
+  }
+
+  getTargetLanguage(actionType) {
+    if (actionType === 'translate') {
+      const translateSelect = document.getElementById('translate-select');
+      return translateSelect?.value || 'fr';
+    }
+    
+    if (actionType === 'translate-indigenous') {
+      const indigenousSelect = document.getElementById('indigenous-select');
+      return indigenousSelect?.value || 'iu';
+    }
+    
+    return 'en';
+  }
+
+  extractContentFromResult(result) {
+    if (result.plain && result.plain.trim()) {
+      return result.plain;
+    }
+    if (result.translated !== undefined) {
+      return result.translated || 'Translation completed but no content returned';
+    }
+    if (result.result) {
+      return result.result;
+    }
+    if (result.simplified) {
+      return result.simplified;
+    }
+    return 'Processing completed but no content returned';
   }
 
   extractMainContent() {
