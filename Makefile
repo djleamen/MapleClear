@@ -4,10 +4,10 @@
 demo: setup build-extension
 	@echo "🍁 Starting MapleClear demo..."
 	@echo "📦 Installing Python dependencies..."
-	@python -m venv .venv 2>/dev/null || true
+	@python3 -m venv .venv 2>/dev/null || true
 	@source .venv/bin/activate && pip install -r server/requirements.txt
 	@echo "🗄️  Seeding terminology cache..."
-	@python tools/seed_terms.py --out data/terms.sqlite
+	@python3 tools/seed_terms.py --out data/terms.sqlite
 	@echo "🚀 Starting local inference daemon..."
 	@source .venv/bin/activate && uvicorn server.app:app --host 127.0.0.1 --port 11434 &
 	@echo "🌐 Opening demo page..."
@@ -18,14 +18,14 @@ demo: setup build-extension
 setup:
 	@echo "🍁 Setting up MapleClear development environment..."
 	@command -v node >/dev/null 2>&1 || { echo "❌ Node.js 20+ required"; exit 1; }
-	@command -v python3 >/dev/null 2>&1 || { echo "❌ Python 3.10+ required"; exit 1; }
+	@command -v python3 >/dev/null 2>&1 || { echo "❌ Python 3.9+ required"; exit 1; }
 	@pnpm install || npm install
 	@cd extension && (pnpm install || npm install)
 
 # Install dependencies
 install: setup
 	@echo "📦 Installing server dependencies..."
-	@python -m venv .venv
+	@python3 -m venv .venv
 	@source .venv/bin/activate && pip install -r server/requirements.txt
 
 # Build everything
@@ -76,7 +76,7 @@ dev-extension:
 # Seed terminology database
 seed-terms:
 	@echo "🌱 Seeding terminology cache..."
-	@python tools/seed_terms.py --out data/terms.sqlite
+	@python3 tools/seed_terms.py --out data/terms.sqlite
 
 help:
 	@echo "🍁 MapleClear Development Commands:"

@@ -30,23 +30,25 @@ class MapleClearContentScript {
   private currentSelection: SelectionInfo | null = null;
 
   public async init(): Promise<void> {
+    console.log('🍁 MapleClear content script initializing...');
+    
     if (!this.shouldActivate()) {
+      console.log('🚫 Not activating on this domain:', window.location.hostname);
       return;
     }
 
+    console.log('✅ Activating MapleClear on:', window.location.hostname);
+    
     this.injectStyles();
-
-    browser.runtime.onMessage.addListener(this.handleMessage.bind(this));
-
-    document.addEventListener('mouseup', this.handleSelection.bind(this));
-    document.addEventListener('keyup', this.handleSelection.bind(this));
-
+    
+    browser.runtime.onMessage.addListener((message: any) => this.handleMessage(message));
+    
+    document.addEventListener('selectionchange', () => this.handleSelection());
+    
     this.setupAcronymDetection();
-
-    console.log('🍁 MapleClear content script loaded');
-  }
-
-  private shouldActivate(): boolean {
+    
+    console.log('🍁 MapleClear content script initialized successfully');
+  }  private shouldActivate(): boolean {
     const hostname = window.location.hostname;
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
     const isGovernment = CONFIG.TRIGGER_DOMAINS.some(domain => 
@@ -64,6 +66,8 @@ class MapleClearContentScript {
   }
 
   private async handleMessage(message: any): Promise<any> {
+    console.log('📨 Content script received message:', message);
+    
     switch (message.type) {
       case 'TOGGLE_PANEL':
         return this.togglePanel();
@@ -78,12 +82,14 @@ class MapleClearContentScript {
         return this.translateText(message.targetLanguage);
       
       case 'CREATE_SPLIT_SCREEN':
+        console.log('🔧 Creating split screen with:', message);
         return this.createSplitScreen(message.action, message.language, message.languageName);
       
       case 'GET_PAGE_INFO':
         return this.getPageInfo();
       
       default:
+        console.warn('❓ Unknown message type:', message.type);
         return { success: false, error: 'Unknown message type' };
     }
   }
@@ -428,7 +434,7 @@ class MapleClearContentScript {
 
   private async handleAcronymHover(event: Event): Promise<void> {
     const target = event.target as HTMLElement;
-    if (target?.classList.contains('mapleclear-acronym')) {
+    if (target?.classList?.contains?.('mapleclear-acronym')) {
       const acronym = target.dataset.acronym;
       if (acronym) {
         await this.showAcronymTooltip(target, acronym);
@@ -438,14 +444,14 @@ class MapleClearContentScript {
 
   private handleAcronymLeave(event: Event): void {
     const target = event.target as HTMLElement;
-    if (target?.classList.contains('mapleclear-acronym')) {
+    if (target?.classList?.contains?.('mapleclear-acronym')) {
       this.hideAcronymTooltip();
     }
   }
 
   private async handleAcronymClick(event: Event): Promise<void> {
     const target = event.target as HTMLElement;
-    if (target?.classList.contains('mapleclear-acronym')) {
+    if (target?.classList?.contains?.('mapleclear-acronym')) {
       event.preventDefault();
       const acronym = target.dataset.acronym;
       if (acronym) {
@@ -470,16 +476,68 @@ class MapleClearContentScript {
         
         if (expansion) {
           this.createTooltip(element, expansion);
+        } else {
+          this.createTooltip(element, this.getDemoAcronymExpansion(acronym));
         }
+      } else {
+        this.createTooltip(element, this.getDemoAcronymExpansion(acronym));
       }
     } catch (error) {
       console.log('Could not fetch acronym expansion:', error);
-      this.createTooltip(element, {
-        acronym,
-        expansion: 'Expansion not available',
-        definition: 'Server not available - click the MapleClear extension icon to get started'
-      });
+      this.createTooltip(element, this.getDemoAcronymExpansion(acronym));
     }
+  }
+
+  private getDemoAcronymExpansion(acronym: string): any {
+    // Common Canadian government acronyms for demo
+    const demoExpansions: { [key: string]: any } = {
+      'CBC': {
+        acronym: 'CBC',
+        expansion: 'Canadian Broadcasting Corporation',
+        definition: 'Canada\'s national public broadcaster providing news, entertainment, and information services.'
+      },
+      'CRA': {
+        acronym: 'CRA',
+        expansion: 'Canada Revenue Agency',
+        definition: 'Federal agency responsible for tax collection and administration of tax laws.'
+      },
+      'RCMP': {
+        acronym: 'RCMP',
+        expansion: 'Royal Canadian Mounted Police',
+        definition: 'Canada\'s national police service providing federal law enforcement.'
+      },
+      'EI': {
+        acronym: 'EI',
+        expansion: 'Employment Insurance',
+        definition: 'Government program providing temporary financial assistance to unemployed workers.'
+      },
+      'CPP': {
+        acronym: 'CPP',
+        expansion: 'Canada Pension Plan',
+        definition: 'Contributory, earnings-related social insurance program providing retirement benefits.'
+      },
+      'GST': {
+        acronym: 'GST',
+        expansion: 'Goods and Services Tax',
+        definition: 'Federal value-added tax levied on most goods and services sold in Canada.'
+      },
+      'HST': {
+        acronym: 'HST',
+        expansion: 'Harmonized Sales Tax',
+        definition: 'Combined federal and provincial sales tax used in participating provinces.'
+      },
+      'SIN': {
+        acronym: 'SIN',
+        expansion: 'Social Insurance Number',
+        definition: 'Nine-digit number required to work in Canada and access government programs.'
+      }
+    };
+
+    return demoExpansions[acronym] || {
+      acronym,
+      expansion: 'Expansion not available',
+      definition: '🍁 MapleClear can provide definitions when connected to the server. Click the extension icon to get started!'
+    };
   }
 
   private createTooltip(element: HTMLElement, expansion: any): void {
@@ -487,26 +545,47 @@ class MapleClearContentScript {
     tooltip.className = 'mapleclear-tooltip';
     tooltip.innerHTML = `
       <div class="tooltip-content">
-        <strong>${expansion.acronym}</strong>: ${expansion.expansion}
+        <strong>${expansion.acronym}</strong>
+        ${expansion.expansion}
         ${expansion.definition ? `<div class="definition">${expansion.definition}</div>` : ''}
-        ${expansion.source_url ? `<a href="${expansion.source_url}" target="_blank">More info</a>` : ''}
+        ${expansion.source_url ? `<a href="${expansion.source_url}" target="_blank">More info →</a>` : ''}
       </div>
     `;
     
     const rect = element.getBoundingClientRect();
-    tooltip.style.position = 'absolute';
-    tooltip.style.top = `${rect.bottom + window.scrollY + 5}px`;
-    tooltip.style.left = `${rect.left + window.scrollX}px`;
-    tooltip.style.zIndex = '10000';
-    tooltip.style.background = '#333';
-    tooltip.style.color = 'white';
-    tooltip.style.padding = '8px 12px';
-    tooltip.style.borderRadius = '4px';
-    tooltip.style.fontSize = '14px';
-    tooltip.style.maxWidth = '300px';
-    tooltip.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
     
+    // Add tooltip to DOM first to measure its dimensions
+    tooltip.style.position = 'absolute';
+    tooltip.style.visibility = 'hidden';
     document.body.appendChild(tooltip);
+    
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const tooltipWidth = tooltipRect.width;
+    const tooltipHeight = tooltipRect.height;
+    
+    // Calculate optimal position
+    let top = rect.bottom + window.scrollY + 8;
+    let left = rect.left + window.scrollX;
+    
+    // Adjust horizontal position to stay within viewport
+    if (left + tooltipWidth > viewportWidth - 20) {
+      left = viewportWidth - tooltipWidth - 20;
+    }
+    if (left < 20) {
+      left = 20;
+    }
+    
+    // Adjust vertical position if tooltip would go below viewport
+    if (rect.bottom + tooltipHeight > viewportHeight - 20) {
+      top = rect.top + window.scrollY - tooltipHeight - 8;
+    }
+    
+    // Final positioning
+    tooltip.style.top = `${top}px`;
+    tooltip.style.left = `${left}px`;
+    tooltip.style.visibility = 'visible';
   }
 
   private hideAcronymTooltip(): void {
@@ -552,10 +631,14 @@ class MapleClearContentScript {
 
   private async createSplitScreen(action: string, language: string, languageName: string): Promise<{ success: boolean; error?: string }> {
     try {
+      console.log('🔧 Creating split screen:', { action, language, languageName });
       this.removeSplitScreen();
       
       const mainContent = this.extractMainContentForSplitScreen();
+      console.log('📄 Extracted main content length:', mainContent?.length || 0);
+      
       if (!mainContent) {
+        console.error('❌ No content found to process');
         return { success: false, error: 'No content found to process' };
       }
 
@@ -588,7 +671,14 @@ class MapleClearContentScript {
         <div class="pane-content">
           <div class="processing-indicator">
             <div class="spinner"></div>
-            <p>Processing content...</p>
+            <h3>🍁 MapleClear is working...</h3>
+            <p>${action === 'simplify' ? 'Simplifying your content into plain language' : `Translating to ${languageName}`}</p>
+            <ul class="processing-steps">
+              <li>Analyzing content structure</li>
+              <li>Processing with AI</li>
+              <li>Applying Canadian government style</li>
+              <li>Detecting acronyms for tooltips</li>
+            </ul>
           </div>
         </div>
       `;
@@ -701,10 +791,14 @@ class MapleClearContentScript {
       tempDiv.innerHTML = content;
       const textContent = tempDiv.textContent || tempDiv.innerText || '';
 
+      console.log('🔧 Processing content for split screen:', { action, language, contentLength: textContent.length });
+
       const endpoint = action === 'simplify' ? '/simplify' : '/translate';
       const requestData = action === 'simplify' 
         ? { text: textContent, target_grade: 7, preserve_acronyms: true }
         : { text: textContent, target_language: language, preserve_terms: true };
+
+      console.log('🚀 Making API request to:', `${CONFIG.API_BASE}${endpoint}`);
 
       const response = await fetch(`${CONFIG.API_BASE}${endpoint}`, {
         method: 'POST',
@@ -717,20 +811,92 @@ class MapleClearContentScript {
       }
 
       const result = await response.json();
-      const processedText = result.plain || result.result || result.simplified || result.translated || 'Processing completed';
+      console.log('📦 API response received:', result);
+
+      let processedText = '';
+      
+      // Handle different response types
+      if (result.plain && result.plain.trim()) {
+        processedText = result.plain;
+        console.log('✅ Using result.plain:', processedText.substring(0, 100) + '...');
+      } else if (result.translated !== undefined) {
+        processedText = result.translated || 'Translation completed but no content returned';
+        console.log('✅ Using result.translated:', processedText.substring(0, 100) + '...');
+      } else if (result.result) {
+        processedText = result.result;
+        console.log('✅ Using result.result:', processedText.substring(0, 100) + '...');
+      } else if (result.simplified) {
+        processedText = result.simplified;
+        console.log('✅ Using result.simplified:', processedText.substring(0, 100) + '...');
+      } else {
+        // Fallback: show the raw JSON response for debugging
+        processedText = `Debug: ${JSON.stringify(result, null, 2)}`;
+        console.log('⚠️ No recognized content field in response, showing raw response');
+      }
 
       const paneContent = processedPane.querySelector('.pane-content');
       if (paneContent) {
-        const formattedContent = processedText
-          .split('\n')
-          .map((line: string) => line.trim())
-          .filter((line: string) => line.length > 0)
-          .map((line: string) => `<p>${this.escapeHtml(line)}</p>`)
-          .join('');
+        console.log('🎨 Formatting content for display...');
+        console.log('🔍 Raw processedText:', processedText);
+        
+        // Simplify content formatting - just use the text directly with minimal processing
+        let finalContent = '';
+        if (processedText?.trim()) {
+          // Even simpler approach: just put the text directly with basic styling
+          finalContent = `<div style="color: #000000 !important; font-size: 18px !important; line-height: 1.6 !important; padding: 20px !important; background: #ffffff !important; border: 2px solid red !important;">${processedText.replace(/\n/g, '<br>')}</div>`;
+        } else {
+          finalContent = '<div style="color: #ff0000 !important; font-size: 18px !important; background: #ffff00 !important; padding: 20px !important; border: 2px solid red !important;"><em>No content was returned from the server</em></div>';
+        }
 
-        paneContent.innerHTML = formattedContent || '<p>No content processed</p>';
+        console.log('📝 Final formatted content length:', finalContent.length);
+        console.log('📝 Final formatted content preview:', finalContent.substring(0, 300));
+        
+        // Clear any existing content first
+        paneContent.innerHTML = '';
+        console.log('🎨 Cleared existing content');
+        
+        // Set the new content
+        paneContent.innerHTML = finalContent;
+        console.log('🎨 Set new content, innerHTML length:', paneContent.innerHTML.length);
+        
+        // Force visible styling with maximum specificity
+        const htmlElement = paneContent as HTMLElement;
+        htmlElement.style.cssText = `
+          color: #343a40 !important;
+          font-size: 16px !important;
+          line-height: 1.7 !important;
+          visibility: visible !important;
+          display: block !important;
+          opacity: 1 !important;
+          background-color: white !important;
+          min-height: 100px !important;
+          width: 100% !important;
+          overflow: visible !important;
+          position: relative !important;
+          z-index: 1 !important;
+        `;
+        console.log('🎨 Applied styling');
+        
+        // Force all child elements to be visible
+        const allElements = htmlElement.querySelectorAll('*');
+        allElements.forEach((el: Element) => {
+          const element = el as HTMLElement;
+          element.style.cssText = `
+            color: #343a40 !important;
+            visibility: visible !important;
+            display: block !important;
+            opacity: 1 !important;
+          `;
+        });
+        console.log('🎨 Forced visibility on', allElements.length, 'child elements');
+        
+        console.log('🎨 Content set, pane content innerHTML length:', paneContent.innerHTML.length);
+        console.log('🎨 Pane content text content:', paneContent.textContent?.substring(0, 200));
 
         this.setupAcronymDetectionInElement(paneContent as HTMLElement);
+        console.log('✅ Content displayed and acronym detection set up');
+      } else {
+        console.error('❌ Could not find pane content element');
       }
 
     } catch (error) {
@@ -776,6 +942,35 @@ class MapleClearContentScript {
         }
       }
     });
+
+    // Add event listeners specifically for this element
+    element.addEventListener('mouseenter', async (event) => {
+      const target = event.target as HTMLElement;
+      if (target?.classList.contains('mapleclear-acronym')) {
+        const acronym = target.dataset.acronym;
+        if (acronym) {
+          await this.showAcronymTooltip(target, acronym);
+        }
+      }
+    }, true);
+
+    element.addEventListener('mouseleave', (event) => {
+      const target = event.target as HTMLElement;
+      if (target?.classList.contains('mapleclear-acronym')) {
+        this.hideAcronymTooltip();
+      }
+    }, true);
+
+    element.addEventListener('click', async (event) => {
+      const target = event.target as HTMLElement;
+      if (target?.classList.contains('mapleclear-acronym')) {
+        event.preventDefault();
+        const acronym = target.dataset.acronym;
+        if (acronym) {
+          await this.expandAcronym(acronym);
+        }
+      }
+    }, true);
   }
 
   private removeSplitScreen(): void {
@@ -783,12 +978,6 @@ class MapleClearContentScript {
     if (existing) {
       existing.remove();
     }
-  }
-
-  private escapeHtml(text: string): string {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
   }
 
   private getPageInfo(): any {

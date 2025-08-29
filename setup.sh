@@ -57,6 +57,25 @@ pip install -r server/requirements.txt
 echo "📁 Creating data directory..."
 mkdir -p data
 
+# Setup environment file for Groq API
+echo "🔧 Setting up environment configuration..."
+if [ ! -f .env ]; then
+    echo "Creating .env file..."
+    cat > .env << 'EOF'
+# Groq API Configuration
+GROQ=your_groq_api_key_here
+
+# MapleClear Backend Configuration
+MAPLECLEAR_BACKEND=groq
+MAPLECLEAR_MODEL_PATH=openai/gpt-oss-20b
+MAPLECLEAR_HOST=127.0.0.1
+MAPLECLEAR_PORT=11434
+EOF
+    echo "⚠️  Please edit .env file and add your Groq API key"
+else
+    echo "✅ .env file already exists"
+fi
+
 # Seed terminology database
 echo "🌱 Seeding terminology database..."
 python tools/seed_terms.py --out data/terms.sqlite
@@ -75,11 +94,13 @@ echo ""
 echo "✅ Setup complete!"
 echo ""
 echo "🚀 Next steps:"
-echo "  1. Start the server: make dev-server"
-echo "  2. Load extension in browser:"
+echo "  1. Configure Groq API key in .env file (required for testing)"
+echo "     - Edit .env and replace 'your_groq_api_key_here' with your actual key"
+echo "  2. Start the server: make dev-server"
+echo "  3. Load extension in browser:"
 echo "     - Chrome: chrome://extensions -> Load unpacked -> extension/dist"
 echo "     - Firefox: about:debugging -> Load Temporary Add-on"
-echo "  3. Visit demo page: open demo/canada-benefits.html"
+echo "  4. Visit demo page: open demo/canada-benefits.html"
 echo ""
 echo "💡 Use 'make demo' for one-click demo setup"
 echo "📖 See README.md for detailed instructions"
