@@ -48,7 +48,9 @@ class MapleClearContentScript {
     this.setupAcronymDetection();
     
     console.log('🍁 MapleClear content script initialized successfully');
-  }  private shouldActivate(): boolean {
+  }
+
+  private shouldActivate(): boolean {
     const hostname = window.location.hostname;
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
     const isGovernment = CONFIG.TRIGGER_DOMAINS.some(domain => 
