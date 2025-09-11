@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import List
 import sqlite3
 
-# Load environment variables from .env file
 try:
     from dotenv import load_dotenv  # type: ignore
     load_dotenv()
@@ -24,8 +23,8 @@ import aiosqlite  # type: ignore # pylint: disable=import-error
 import uvicorn  # type: ignore # pylint: disable=import-error
 from fastapi import (Depends,  # type: ignore # pylint: disable=import-error
                      FastAPI, HTTPException)
-from fastapi.middleware.cors import CORSMiddleware  # type: ignore # pylint: disable=import-error
-from fastapi.staticfiles import StaticFiles  # type: ignore # pylint: disable=import-error
+from fastapi.middleware.cors import CORSMiddleware # type: ignore # pylint: disable=import-error
+from fastapi.staticfiles import StaticFiles # type: ignore # pylint: disable=import-error
 from pydantic import (BaseModel,  # type: ignore # pylint: disable=import-error
                       Field)
 
@@ -39,11 +38,44 @@ from .prompts.schema import (AcronymResponse, ModelInfo,
                              SimplificationResponse, TranslationResponse)
 
 
+def normalize_language_input(language_input: str) -> str:
+    """
+    Convert language codes to full language names for clarity.
+    Accepts both codes (fr, iu) and full names (French, Inuktitut).
+    Returns the full language name.
+    """
+    language_mapping = {
+        "fr": "French",
+        "french": "French",
+        "iu": "Inuktitut",
+        "inuktitut": "Inuktitut",
+        "en": "English",
+        "english": "English",
+        "es": "Spanish",
+        "spanish": "Spanish",
+        "de": "German",
+        "german": "German",
+        "zh": "Chinese",
+        "chinese": "Chinese",
+        "pa": "Punjabi",
+        "punjabi": "Punjabi",
+        "ar": "Arabic",
+        "arabic": "Arabic",
+        "tl": "Tagalog",
+        "tagalog": "Tagalog",
+        "it": "Italian",
+        "italian": "Italian"
+    }
+
+    lookup_key = language_input.lower().strip()
+    return language_mapping.get(lookup_key, language_input.title())
+
 class Config:
     """Configuration for the MapleClear server."""
     MODEL_PATH = os.getenv("MAPLECLEAR_MODEL_PATH",
                            "openai/gpt-oss-20b")  # Use the 20B gpt-oss model for hackathon
-    BACKEND = os.getenv("MAPLECLEAR_BACKEND", "groq")  # Default to Groq backend for testing
+    # Default to Groq backend for testing
+    BACKEND = os.getenv("MAPLECLEAR_BACKEND", "groq")
     ADAPTERS = os.getenv("MAPLECLEAR_ADAPTERS", "").split(
         ",") if os.getenv("MAPLECLEAR_ADAPTERS") else []
     TERMS_DB = os.getenv("MAPLECLEAR_TERMS_DB", "data/terms.sqlite")
@@ -66,7 +98,7 @@ class TranslateRequest(BaseModel):
     """Request model for translation."""
     text: str = Field(..., description="Text to translate")
     target_language: str = Field(
-        "fr", description="Target language code (fr, iu, etc.)")
+        "French", description="Target language name (French, Inuktitut, etc.)")
     preserve_terms: bool = Field(
         True, description="Preserve official terminology")
     experimental: bool = Field(
@@ -87,14 +119,14 @@ class HealthResponse(BaseModel):
     backend: str
     adapters: List[str]
 
+
 @asynccontextmanager
 async def lifespan(fastapi_app: FastAPI):
     """Manage startup and shutdown events for the FastAPI app."""
-    # Startup logic
     print("🍁 Starting MapleClear server...")
-    print(f"📍 Backend: {Config.BACKEND}")
-    print(f"📁 Model path: {Config.MODEL_PATH}")
-    print(f"🔧 Adapters: {Config.ADAPTERS}")
+    print(f"Backend: {Config.BACKEND}")
+    print(f"Model path: {Config.MODEL_PATH}")
+    print(f"Adapters: {Config.ADAPTERS}")
 
     try:
         if Config.BACKEND == "llama.cpp":
@@ -157,15 +189,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_backend() -> InferenceBackend:
     """Dependency to get the current backend instance."""
     return app.state.backend
+
 
 async def get_terms_db():
     """Get database connection for terms."""
     db_path = Path(Config.TERMS_DB)
     db_path.parent.mkdir(parents=True, exist_ok=True)
     return await aiosqlite.connect(db_path)
+
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check(backend: InferenceBackend = Depends(get_backend)):
@@ -206,9 +241,12 @@ async def translate_text(
 ):
     """Translate text to target language."""
     try:
+        # Normalize language input to full name
+        normalized_language = normalize_language_input(request.target_language)
+
         response = await backend.translate(
             text=request.text,
-            target_language=request.target_language,
+            target_language=normalized_language,
             preserve_terms=request.preserve_terms,
             experimental=request.experimental
         )
@@ -220,7 +258,7 @@ async def translate_text(
 
 @app.post("/expand-acronyms", response_model=AcronymResponse)
 async def expand_acronyms(request: AcronymRequest):
-    """Find and expand acronyms in text."""    
+    """Find and expand acronyms in text."""
     try:
         # Simple regex to find potential acronyms
         potential_acronyms = re.findall(r'\b[A-Z]{2,}\b', request.text)

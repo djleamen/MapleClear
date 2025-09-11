@@ -158,7 +158,7 @@ class MapleClearPanel {
   getTargetLanguage(actionType) {
     if (actionType === 'translate') {
       const translateSelect = document.getElementById('translate-select');
-      return translateSelect?.value || 'fr';
+      return translateSelect?.value || 'French';
     }
     
     if (actionType === 'translate-indigenous') {
@@ -336,12 +336,100 @@ class MapleClearPanel {
   }
 
   formatContent(content) {
-    return content
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
-      .map(line => `<p>${this.escapeHtml(line)}</p>`)
-      .join('');
+    if (!content || typeof content !== 'string') {
+      return '<p>No content available</p>';
+    }
+
+    const html = this.parseMarkdownSyntax(this.escapeHtml(content));
+    const lines = html.split('\n');
+    return this.processLines(lines);
+  }
+
+  parseMarkdownSyntax(html) {
+    return html
+      .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+      .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+      .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
+      .replace(/`(.*?)`/g, '<code>$1</code>');
+  }
+
+  processLines(lines) {
+    const result = [];
+    const listState = { current: null, type: null };
+
+    for (const lineText of lines) {
+      const line = lineText.trim();
+      
+      if (!line) {
+        this.closeCurrentList(result, listState);
+        continue;
+      }
+
+      this.processLine(line, result, listState);
+    }
+
+    this.closeCurrentList(result, listState);
+    return result.join('\n') || '<p>No content available</p>';
+  }
+
+  processLine(line, result, listState) {
+    if (this.isHeader(line)) {
+      this.closeCurrentList(result, listState);
+      result.push(line);
+      return;
+    }
+
+    const numberedMatch = line.match(/^(\d+)\.\s+(.*)$/);
+    if (numberedMatch) {
+      this.handleOrderedListItem(numberedMatch[2], result, listState);
+      return;
+    }
+
+    const bulletMatch = line.match(/^[-*]\s+(.*)$/);
+    if (bulletMatch) {
+      this.handleUnorderedListItem(bulletMatch[1], result, listState);
+      return;
+    }
+
+    this.handleParagraph(line, result, listState);
+  }
+
+  isHeader(line) {
+    return line.match(/^<h[1-6]>/);
+  }
+
+  closeCurrentList(result, listState) {
+    if (listState.current) {
+      result.push(`</${listState.type}>`);
+      listState.current = null;
+      listState.type = null;
+    }
+  }
+
+  handleOrderedListItem(content, result, listState) {
+    this.startNewListIfNeeded('ol', result, listState);
+    result.push(`<li>${content}</li>`);
+  }
+
+  handleUnorderedListItem(content, result, listState) {
+    this.startNewListIfNeeded('ul', result, listState);
+    result.push(`<li>${content}</li>`);
+  }
+
+  startNewListIfNeeded(listType, result, listState) {
+    if (listState.type !== listType) {
+      this.closeCurrentList(result, listState);
+      result.push(`<${listType}>`);
+      listState.type = listType;
+      listState.current = [];
+    }
+  }
+
+  handleParagraph(line, result, listState) {
+    this.closeCurrentList(result, listState);
+    result.push(`<p>${line}</p>`);
   }
 
   escapeHtml(text) {

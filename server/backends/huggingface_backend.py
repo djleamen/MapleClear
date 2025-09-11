@@ -1,6 +1,7 @@
 """
 Hugging Face transformers backend implementation for MapleClear.
 Uses open-weight gpt-oss models via transformers library.
+This is just a sample implementation and should not be used in production
 """
 
 import json
@@ -22,7 +23,6 @@ except ImportError:
     AutoTokenizer = None
     AutoModelForCausalLM = None
 
-# Check if bitsandbytes is available
 try:
     __import__('bitsandbytes')
     BITSANDBYTES_AVAILABLE = True
@@ -44,7 +44,7 @@ class HuggingFaceBackend(InferenceBackend):
         if not TRANSFORMERS_AVAILABLE or AutoTokenizer is None or AutoModelForCausalLM is None:
             print(
                 "⚠️  Transformers not available. Install with: pip install transformers torch")
-            print("🚧 Running in demo mode")
+            print("Running in demo mode...")
             return
 
         try:
@@ -57,7 +57,7 @@ class HuggingFaceBackend(InferenceBackend):
 
         except (ImportError, RuntimeError, OSError, ValueError) as e:
             print(f"❌ Failed to initialize Hugging Face backend: {e}")
-            print("🚧 Running in demo mode")
+            print("Running in demo mode...")
             self.model = None
             self.tokenizer = None
             self.generator = None
@@ -67,15 +67,15 @@ class HuggingFaceBackend(InferenceBackend):
         model_name = self.model_path
         if not model_name or model_name == "~/.mapleclear/models/gpt-oss-20b/":
             model_name = "openai/gpt-oss-20b"
-            print(f"🔄 Using gpt-oss-20b model: {model_name}")
-            print("💡 This is the official gpt-oss-20b model for the OpenAI hackathon")
+            print(f"Using gpt-oss-20b model: {model_name}")
+            print("This is the official gpt-oss-20b model for the OpenAI hackathon")
         return model_name
 
     def _initialize_tokenizer(self, model_name: str) -> None:
         """Initialize the tokenizer."""
         if AutoTokenizer is None:
             raise RuntimeError("AutoTokenizer not available")
-        print(f"📥 Loading model: {model_name}")
+        print(f"Loading model: {model_name}")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
@@ -85,17 +85,17 @@ class HuggingFaceBackend(InferenceBackend):
         # Use Metal Performance Shaders (MPS) on Apple Silicon if available
         if torch is not None and hasattr(torch.backends, 'mps') and torch.backends.mps.is_available(): # pylint: disable=line-too-long
             device = "mps"
-            print(f"🍎 Using Apple Silicon MPS acceleration: {device}")
+            print(f"Using Apple Silicon MPS acceleration: {device}")
         elif torch is not None and torch.cuda.is_available():
             device = "cuda"
         else:
             device = "cpu"
-        print(f"🖥️  Using device: {device}")
+        print(f"Using device: {device}")
 
         # Force bfloat16 for gpt-oss to match model's internal quantization
         if torch is not None:
             dtype = torch.bfloat16
-            print("🔧 Using bfloat16 to match gpt-oss model quantization")
+            print("Using bfloat16 to match gpt-oss model quantization")
         else:
             dtype = None
 
@@ -112,9 +112,9 @@ class HuggingFaceBackend(InferenceBackend):
         # Add quantization for large models
         if BITSANDBYTES_AVAILABLE and device == "cuda":
             model_kwargs["load_in_8bit"] = True
-            print("🔧 Using 8-bit quantization to reduce memory usage")
+            print("Using 8-bit quantization to reduce memory usage...")
         else:
-            print("💡 Install bitsandbytes for quantization: pip install bitsandbytes")
+            print("Install bitsandbytes for quantization: pip install bitsandbytes")
 
         return model_kwargs
 
@@ -126,7 +126,7 @@ class HuggingFaceBackend(InferenceBackend):
             model_name, **model_kwargs)
         # Move model to the selected device
         self.model = self.model.to(device)
-        print(f"✅ Model moved to {device}")
+        print(f"Model moved to {device}")
 
     async def cleanup(self) -> None:
         """Clean up resources."""
@@ -160,20 +160,20 @@ class HuggingFaceBackend(InferenceBackend):
     def _run_inference(self, prompt: str) -> str:
         """Run inference using Hugging Face transformers."""
         if not self.model or not self.tokenizer:
-            print("🚧 Model or tokenizer not available, using demo response")
+            print("Model or tokenizer not available, using demo response...")
             return self._get_demo_response(prompt)
 
         try:
             return self._perform_model_inference(prompt)
         except (RuntimeError, ValueError, TypeError, TimeoutError) as e:
             print(f"❌ Inference error: {e}")
-            print(f"🔍 Error type: {type(e)}")
-            print(f"📊 Traceback: {traceback.format_exc()}")
+            print(f"Error type: {type(e)}")
+            print(f"Traceback: {traceback.format_exc()}")
             return self._get_demo_response(prompt)
 
     def _perform_model_inference(self, prompt: str) -> str:
         """Perform the actual model inference."""
-        print(f"🔍 Running inference with prompt length: {len(prompt)}")
+        print(f"Running inference with prompt length: {len(prompt)}...")
 
         # Prepare inputs
         inputs = self._prepare_inputs(prompt)
@@ -196,14 +196,14 @@ class HuggingFaceBackend(InferenceBackend):
 
         device = next(self.model.parameters()).device
         model_dtype = next(self.model.parameters()).dtype
-        print(f"🖥️  Model device: {device}, dtype: {model_dtype}")
+        print(f"Model device: {device}, dtype: {model_dtype}")
 
         # Move inputs to device - don't convert dtype for input_ids (they should stay as int64)
         for key in inputs:
             if hasattr(inputs[key], 'to'):
                 inputs[key] = inputs[key].to(device=device)
                 print(
-                    f"📊 Input {key}: shape={inputs[key].shape}, dtype={inputs[key].dtype}")
+                    f"Input {key}: shape={inputs[key].shape}, dtype={inputs[key].dtype}")
 
         return inputs
 
@@ -214,7 +214,7 @@ class HuggingFaceBackend(InferenceBackend):
         if not self.model or not self.tokenizer:
             raise RuntimeError("Model or tokenizer not available")
 
-        print("🎯 Starting model generation...")
+        print("Starting model generation...")
 
         model_dtype = next(self.model.parameters()).dtype
 
@@ -262,7 +262,7 @@ class HuggingFaceBackend(InferenceBackend):
             raise RuntimeError("Tokenizer not available")
 
         # Decode response
-        print("📝 Decoding response...")
+        print("Decoding response...")
         full_response = self.tokenizer.decode(
             outputs[0], skip_special_tokens=True)
 
@@ -272,8 +272,8 @@ class HuggingFaceBackend(InferenceBackend):
         else:
             response = full_response.strip()
 
-        print(f"📄 Generated response length: {len(response)}")
-        print(f"🔤 Response preview: {response[:100]}...")
+        print(f"Generated response length: {len(response)}")
+        print(f"Response preview: {response[:100]}...")
 
         # Try to extract JSON if present
         if '{' in response and '}' in response:
@@ -305,7 +305,7 @@ class HuggingFaceBackend(InferenceBackend):
         elif "translate" in prompt.lower() or "french" in prompt.lower():
             return """{
   "translated": "Ceci est le texte traduit en français.",
-  "target_language": "fr",
+  "target_language": "French",
   "preserved_terms": ["Canada Revenue Agency"],
   "confidence": 0.85,
   "cautions": ["This is a demo response from Hugging Face backend"]
@@ -368,7 +368,7 @@ class HuggingFaceBackend(InferenceBackend):
     async def translate(
         self,
         text: str,
-        target_language: str = "fr",
+        target_language: str = "French",
         preserve_terms: bool = True,
         experimental: bool = False
     ) -> TranslationResponse:

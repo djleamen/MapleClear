@@ -1,5 +1,6 @@
 """
 vLLM backend implementation for MapleClear.
+This is just a sample implementation and should not be used in production
 """
 
 import json
@@ -17,7 +18,7 @@ except ImportError:
 from .base import InferenceBackend
 from ..prompts.schema import SimplificationResponse, TranslationResponse, AcronymResponse, ModelInfo
 
-DEMO_MODE_MESSAGE = "🚧 Running in demo mode"
+DEMO_MODE_MESSAGE = "Running in demo mode..."
 
 
 class VLLMBackend(InferenceBackend):
@@ -31,13 +32,13 @@ class VLLMBackend(InferenceBackend):
     async def initialize(self) -> None:
         """Initialize vLLM backend."""
         if not VLLM_AVAILABLE:
-            print("⚠️  vLLM not available. Install with: pip install vllm")
+            print("vLLM not available. Install with: pip install vllm")
             print(DEMO_MODE_MESSAGE)
             return
 
         try:
             if SamplingParams is None:
-                print("⚠️  vLLM components not available")
+                print("vLLM components not available")
                 print(DEMO_MODE_MESSAGE)
                 return
 
@@ -49,12 +50,12 @@ class VLLMBackend(InferenceBackend):
             )
             model_path = Path(self.model_path).expanduser()
             if not model_path.exists():
-                print(f"⚠️  Model not found: {model_path}")
+                print(f"Model not found: {model_path}")
                 print(DEMO_MODE_MESSAGE)
                 return
 
             if LLM is None:
-                print("⚠️  vLLM LLM class not available")
+                print("vLLM LLM class not available")
                 print(DEMO_MODE_MESSAGE)
                 return
 
@@ -68,7 +69,7 @@ class VLLMBackend(InferenceBackend):
             print(DEMO_MODE_MESSAGE)
         except (RuntimeError, OSError, ValueError) as e:
             print(f"❌ Failed to initialize vLLM: {e}")
-            print("🚧 Running in demo mode")
+            print("Running in demo mode...")
 
     async def cleanup(self) -> None:
         """Clean up resources."""
@@ -112,15 +113,15 @@ class VLLMBackend(InferenceBackend):
   ],
   "cautions": ["This is a demo response from vLLM backend"]
 }"""
-        elif "translate" in prompt.lower() or "french" in prompt.lower():
+        if "translate" in prompt.lower() or "french" in prompt.lower():
             return """{
   "translated": "Ceci est le texte traduit en français.",
-  "target_language": "fr",
+  "target_language": "French",
   "preserved_terms": ["Canada Revenue Agency"],
   "confidence": 0.85,
   "cautions": ["This is a demo response from vLLM backend"]
 }"""
-        elif "acronym" in prompt.lower():
+        if "acronym" in prompt.lower():
             return """{
   "acronyms": [
     {
@@ -132,8 +133,7 @@ class VLLMBackend(InferenceBackend):
     }
   ]
 }"""
-        else:
-            return '{"result": "Demo response for development"}'
+        return '{"result": "Demo response for development"}'
 
     async def simplify(
         self,
@@ -171,7 +171,7 @@ class VLLMBackend(InferenceBackend):
     async def translate(
         self,
         text: str,
-        target_language: str = "fr",
+        target_language: str = "French",
         preserve_terms: bool = True,
         experimental: bool = False
     ) -> TranslationResponse:

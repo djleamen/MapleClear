@@ -48,18 +48,16 @@ class GroqBackend(InferenceBackend):
     async def initialize(self) -> None:
         """Initialize Groq backend."""
         if not HTTPX_AVAILABLE:
-            print("⚠️  httpx not available, running in demo mode")
+            print("httpx not available, running in demo mode")
             self.demo_mode = True
             return
 
-        # Get API key from environment
         self.api_key = os.getenv("GROQ")
         if not self.api_key:
-            print("⚠️  GROQ API key not found in environment, running in demo mode")
+            print("⚠️ GROQ API key not found in environment, running in demo mode")
             self.demo_mode = True
             return
 
-        # Initialize HTTP client
         if HTTPX_AVAILABLE and httpx is not None:
             self.client = httpx.AsyncClient(
                 base_url=GROQ_API_BASE,
@@ -72,41 +70,30 @@ class GroqBackend(InferenceBackend):
 
         try:
             await self._check_api_status()
-            print(f"✅ Groq backend initialized with model: {self.model_path}")
+            print(f"Groq backend initialized with model: {self.model_path}")
         except (GroqConnectionError, GroqAPIError) as e:
-            print(f"⚠️  Groq API not accessible ({e}), running in demo mode")
+            print(f"Groq API not accessible ({e}), running in demo mode...")
             self.demo_mode = True
 
     async def _check_api_status(self) -> None:
         """Check if Groq API is accessible."""
-        if self.demo_mode or not self.client or not HTTPX_AVAILABLE:
+        if self.demo_mode or not self.client or not HTTPX_AVAILABLE or httpx is None:
             return
 
         try:
             response = await self.client.get("/models")
             response.raise_for_status()
-        except Exception as e:
-            if "RequestError" in str(type(e)) or "ConnectError" in str(type(e)):
-                raise GroqConnectionError(
-                    f"Failed to connect to Groq API: {e}") from e
-            elif hasattr(e, 'response'):
-                # Handle httpx HTTPStatusError and similar exceptions
-                response = getattr(e, 'response', None)
-                if response is not None:
-                    status_code = getattr(response, 'status_code', 'unknown')
-                    response_text = getattr(response, 'text', str(e))
-                    raise GroqAPIError(
-                        f"Groq API error: {status_code} - {response_text}") from e
-                elif HTTPX_AVAILABLE and httpx is not None and isinstance(e, httpx.HTTPError):
-                    raise GroqAPIError(f"Groq API error: {e}") from e
-                else:
-                    # Generic fallback for any other exception with a 'response' attribute
-                    raise GroqConnectionError(
-                        f"Failed to connect to Groq API: {e}") from e
-            else:
-                # Generic fallback for any other unexpected exception
-                raise GroqError(
-                    f"Unexpected error while connecting to Groq API: {e}") from e
+        except (httpx.ConnectError, httpx.RequestError, httpx.TimeoutException) as e:
+            raise GroqConnectionError(
+                f"Failed to connect to Groq API: {e}") from e
+        except httpx.HTTPStatusError as e:
+            status_code = e.response.status_code
+            response_text = e.response.text
+            raise GroqAPIError(
+                f"Groq API error: {status_code} - {response_text}") from e
+        except httpx.HTTPError as e:
+            raise GroqAPIError(f"Groq API error: {e}") from e
+
     async def cleanup(self) -> None:
         """Cleanup Groq backend."""
         if self.client:
@@ -133,7 +120,7 @@ class GroqBackend(InferenceBackend):
         if not self.client:
             raise GroqError("Groq client not initialized")
 
-        data = None  # Initialize to avoid unbound variable issues
+        data = None # Initialize to avoid unbound variable issues
 
         try:
             # Use OpenAI-compatible chat completions endpoint
@@ -145,13 +132,13 @@ class GroqBackend(InferenceBackend):
                         "content": prompt
                     }
                 ],
-                "max_tokens": 2048,  # Increased token limit
+                "max_tokens": 2048,
                 "temperature": 0.1,
                 "stream": False
             }
 
             print(
-                f"🚀 Sending request to Groq API with model: {self.model_path}")
+                f"Sending request to Groq API with model: {self.model_path}")
 
             response = await self.client.post(
                 "/chat/completions",
@@ -162,7 +149,7 @@ class GroqBackend(InferenceBackend):
             data = response.json()
             print(
                 f"✅ Received response from Groq API: {len(str(data))} characters")
-            print(f"🔍 Full response data: {json.dumps(data, indent=2)}")
+            print(f"Full response data: {json.dumps(data, indent=2)}")
 
             if "choices" not in data or not data["choices"]:
                 print(
@@ -178,38 +165,38 @@ class GroqBackend(InferenceBackend):
 
             # Use reasoning if content is empty (happens when model hits token limit)
             if not content.strip() and reasoning.strip():
-                print("📝 Content field empty, using reasoning field instead")
+                print("Content field empty, using reasoning field instead")
                 content = reasoning
             elif not content.strip():
                 print("❌ Both content and reasoning fields are empty")
                 raise GroqAPIError("No content in API response")
 
             print(
-                f"📝 Content extracted ({len(content)} chars): {repr(content[:500])}")
+                f"Content extracted ({len(content)} chars): {repr(content[:500])}")
 
             # Extract JSON if present, otherwise return content
             return self._extract_json_or_return_content(content)
 
         except (ConnectionError, TimeoutError) as e:
-            print(f"🔌 Connection error: {e}")
+            print(f"Connection error: {e}")
             raise GroqConnectionError(
                 f"Failed to connect to Groq API: {e}") from e
         except (KeyError, json.JSONDecodeError) as e:
-            print(f"🔧 Parse error: {e}")
+            print(f"Parse error: {e}")
             if data:
                 print(f"Raw response data: {data}")
             else:
                 print("No response data available")
             raise GroqAPIError(f"Failed to parse Groq response: {e}") from e
         except Exception as e:  # pylint: disable=broad-except
-            print(f"❌ Unexpected error: {type(e).__name__}: {e}")
+            print(f"Unexpected error: {type(e).__name__}: {e}")
             # Handle any other errors as API errors
             raise GroqAPIError(f"Groq API error: {e}") from e
 
     def _extract_json_or_return_content(self, content: str) -> str:
         """Extract JSON from response content or return the content as-is."""
         print(
-            f"🔍 Extracting JSON from content ({len(content)} chars): {repr(content[:200])}")
+            f"Extracting JSON from content ({len(content)} chars): {repr(content[:200])}")
 
         if not content or not content.strip():
             print("❌ Content is empty or whitespace only")
@@ -222,19 +209,19 @@ class GroqBackend(InferenceBackend):
             try:
                 # Validate that it's proper JSON
                 parsed = json.loads(json_str)
-                print(f"✅ Found valid JSON with keys: {list(parsed.keys())}")
+                print(f"Found valid JSON with keys: {list(parsed.keys())}")
                 return json_str
             except json.JSONDecodeError as e:
-                print(f"❌ Invalid JSON found: {e}")
+                print(f"Invalid JSON found: {e}")
 
         # If the entire content looks like JSON, try parsing it directly
         try:
             parsed = json.loads(content)
-            print(f"✅ Content is valid JSON with keys: {list(parsed.keys())}")
+            print(f"Content is valid JSON with keys: {list(parsed.keys())}")
             return content
         except json.JSONDecodeError:
             print(
-                f"⚠️  Content is not valid JSON, returning as-is: {repr(content[:100])}")
+                f"Content is not valid JSON, returning as-is: {repr(content[:100])}")
 
         # Return content as-is if no valid JSON found
         return content
@@ -243,20 +230,20 @@ class GroqBackend(InferenceBackend):
         """Return demo responses for testing without API."""
         if "simplify" in prompt.lower():
             return json.dumps({
-                "plain": "This is a simplified version of the text. Complex terms have been replaced with simpler alternatives.", # pylint: disable=line-too-long
-                "rationale": ["Replaced technical jargon", "Shortened sentences", "Used common words"], # pylint: disable=line-too-long
+                "plain": "This is a simplified version of the text. Complex terms have been replaced with simpler alternatives.",  # pylint: disable=line-too-long
+                "rationale": ["Replaced technical jargon", "Shortened sentences", "Used common words"],  # pylint: disable=line-too-long
                 "cautions": ["Some nuance may be lost in simplification"],
                 "readability_grade": 7.2
             })
-        elif "translate" in prompt.lower():
+        if "translate" in prompt.lower():
             return json.dumps({
                 "translated": "Ceci est une traduction du texte en français.",
-                "target_language": "fr",
+                "target_language": "French",
                 "preserved_terms": ["specific terminology"],
                 "confidence": 0.85,
                 "cautions": ["Some context may be lost in translation"]
             })
-        elif "acronym" in prompt.lower():
+        if "acronym" in prompt.lower():
             return json.dumps({
                 "expansions": [
                     {"acronym": "API", "expansion": "Application Programming Interface",
@@ -265,8 +252,7 @@ class GroqBackend(InferenceBackend):
                         "confidence": 0.98}
                 ]
             })
-        else:
-            return f"{DEMO_MODE_MESSAGE}: Demo response for: {prompt[:50]}..."
+        return f"{DEMO_MODE_MESSAGE}: Demo response for: {prompt[:50]}..."
 
     async def simplify(
         self,
@@ -286,7 +272,7 @@ class GroqBackend(InferenceBackend):
             )
 
             result = await self._run_inference(prompt)
-            print(f"🔄 Simplify result: {result[:200]}...")
+            print(f"Simplify result: {result[:200]}...")
 
             try:
                 response_data = json.loads(result)
@@ -296,11 +282,15 @@ class GroqBackend(InferenceBackend):
                 print(
                     f"❌ Failed to parse simplification response as JSON: {e}")
                 print(f"Raw result: {result}")
-                # Fallback for non-JSON responses
+
+                # Try to extract just the text content if JSON parsing fails
+                cleaned_result = self._extract_clean_text(result)
+
                 return SimplificationResponse(
-                    plain=result if result.strip() else "No content was generated",
-                    rationale=[f"API response could not be parsed: {str(e)}"],
-                    cautions=["Response parsing failed - showing raw result"]
+                    plain=cleaned_result,
+                    rationale=["Response was not in expected JSON format"],
+                    cautions=[
+                        "AI response required cleanup - please verify accuracy"]
                 )
         except (GroqConnectionError, GroqAPIError) as e:
             print(f"❌ Simplification failed with Groq error: {e}")
@@ -313,7 +303,7 @@ class GroqBackend(InferenceBackend):
     async def translate(
         self,
         text: str,
-        target_language: str = "fr",
+        target_language: str = "French",
         preserve_terms: bool = True,
         experimental: bool = False
     ) -> TranslationResponse:
@@ -328,7 +318,6 @@ class GroqBackend(InferenceBackend):
 
         result = await self._run_inference(prompt)
 
-        # Since we're now asking for plain text, treat the result as the translation
         # Try JSON first in case the model ignores our instructions
         try:
             response_data = json.loads(result)
@@ -371,27 +360,35 @@ class GroqBackend(InferenceBackend):
         """Load prompt template for the given task."""
         templates = {
             # pylint: disable=line-too-long
-            "simplify": """Simplify this Canadian government text to Grade {target_grade} reading level. Keep it accurate and preserve acronyms.
+            "simplify": """You are a helpful assistant that simplifies Canadian government text. 
+
+IMPORTANT: Respond with ONLY valid JSON. Do not include any explanation, reasoning, or other text.
+
+Task: Simplify this text to Grade {target_grade} reading level while preserving accuracy and acronyms.
 
 Text: {text}
 
-Respond ONLY with valid JSON:
+Response format (JSON only):
 {{
-    "plain": "simplified text here",
-    "rationale": ["change 1", "change 2"],
-    "cautions": ["warning if any"],
+    "plain": "your simplified text here",
+    "rationale": ["briefly explain major changes"],
+    "cautions": ["any important warnings"],
     "readability_grade": 7.0
 }}""",
-            "translate": """Translate this text to {target_language}:
+            "translate": """You are a helpful translator for Canadian government content.
+
+IMPORTANT: Respond with ONLY the translated text. Do not include any explanations or reasoning.
+
+Translate this text to {target_language}:
 
 {text}
 
 TRANSLATED TEXT:""",
-            "acronym": """Find and expand all acronyms in this text:
+            "acronym": """Find and expand all acronyms in this text. Respond with ONLY valid JSON.
 
 {text}
 
-Respond with JSON:
+Response format (JSON only):
 {{
     "expansions": [
         {{
@@ -404,3 +401,51 @@ Respond with JSON:
         }
 
         return templates.get(task, "Process this text: {text}")
+
+    def _extract_clean_text(self, raw_result: str) -> str:
+        """Extract clean text from a malformed AI response."""
+        if not raw_result or not raw_result.strip():
+            return "No content was generated"
+
+        # Remove common reasoning patterns
+        cleaned = raw_result
+
+        # Remove "We need to..." type reasoning
+        cleaned = re.sub(r'^We need to.*?\. ', '', cleaned, flags=re.MULTILINE)
+        cleaned = re.sub(r'^I need to.*?\. ', '', cleaned, flags=re.MULTILINE)
+        cleaned = re.sub(r'^The.*?is to.*?\. ', '',
+                         cleaned, flags=re.MULTILINE)
+
+        # Remove JSON-related text
+        cleaned = re.sub(r'.*?with plain simplified text.*?\. ',
+                         '', cleaned, flags=re.DOTALL)
+        cleaned = re.sub(r'.*?Provide.*?\. ', '', cleaned, flags=re.DOTALL)
+
+        # If it looks like JSON but is malformed, try to extract content
+        if '{' in cleaned and '}' in cleaned:
+            # Try to find content between quotes after "plain":
+            plain_match = re.search(
+                r'"plain"\s*:\s*"([^"]*)"', cleaned, re.DOTALL)
+            if plain_match:
+                return plain_match.group(1)
+
+        # Clean up remaining reasoning text
+        lines = cleaned.split('\n')
+        content_lines = []
+
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+
+            # Skip lines that look like reasoning
+            if any(phrase in line.lower() for phrase in [
+                'we need to', 'i need to', 'the goal is to', 'let\'s', 'first,', 'second,',
+                'provide', 'ensure', 'make sure', 'it is important', 'we can', 'we should'
+            ]):
+                continue
+
+            content_lines.append(line)
+
+        result = ' '.join(content_lines)
+        return result if result.strip() else "Content could not be extracted from AI response"
