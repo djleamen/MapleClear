@@ -1,6 +1,7 @@
 """
 LM Studio backend implementation for MapleClear.
 Communicates with LM Studio's local API server for optimized Apple Silicon inference.
+This is just a sample implementation and should not be used in production
 """
 
 import json
@@ -40,56 +41,51 @@ class LMStudioBackend(InferenceBackend):
 
     def __init__(self, model_path: str = "", adapters: Optional[List[str]] = None):
         super().__init__(model_path, adapters or [])
-        self.base_url = "http://localhost:1234/v1"  # LM Studio's default API endpoint
+        self.base_url = "http://localhost:1234/v1"
         self.model_name = None
         self.session = None
 
     async def initialize(self) -> None:
         """Initialize LM Studio backend."""
         if not AIOHTTP_AVAILABLE:
-            print("⚠️  aiohttp not available. Install with: pip install aiohttp")
+            print("aiohttp not available. Install with: pip install aiohttp")
             print(DEMO_MODE_MESSAGE)
             return
 
         if aiohttp is None:
-            print("⚠️  aiohttp not available. Install with: pip install aiohttp")
+            print("aiohttp not available. Install with: pip install aiohttp")
             print(DEMO_MODE_MESSAGE)
             return
 
         try:
             self.session = aiohttp.ClientSession()
 
-            # Check if LM Studio server is running
             await self._check_server_status()
 
-            # Get available models
             models = await self._get_available_models()
 
-            # Try to find gpt-oss model
             gpt_oss_models = [
                 m for m in models if 'gpt-oss' in m.lower() or 'gpt_oss' in m.lower()]
 
             if gpt_oss_models:
                 self.model_name = gpt_oss_models[0]
-                print(f"🎯 Found gpt-oss model in LM Studio: {self.model_name}")
-                print(
-                    "💡 This model should run much faster than raw transformers on Apple Silicon")
+                print(f"Found gpt-oss model in LM Studio: {self.model_name}")
             elif models:
                 self.model_name = models[0]
-                print(f"🔄 Using available model: {self.model_name}")
+                print(f"Using available model: {self.model_name}")
                 print(
-                    "💡 Consider loading openai/gpt-oss-20b in LM Studio for hackathon compliance")
+                    "Consider loading openai/gpt-oss-20b in LM Studio for hackathon compliance")
             else:
-                print("⚠️  No models loaded in LM Studio")
-                print("💡 Please load openai/gpt-oss-20b in LM Studio and restart")
+                print("No models loaded in LM Studio")
+                print("Please load openai/gpt-oss-20b in LM Studio and restart")
                 self.model_name = None
 
             print("✅ LM Studio backend initialized successfully")
 
         except LMStudioError as e:
             print(f"❌ Failed to initialize LM Studio backend: {e}")
-            print("💡 Make sure LM Studio is running with a model loaded")
-            print("💡 Download LM Studio from: https://lmstudio.ai/")
+            print("Make sure LM Studio is running with a model loaded")
+            print("Download LM Studio from: https://lmstudio.ai/")
             print(DEMO_MODE_MESSAGE)
             self.model_name = None
 
@@ -118,11 +114,11 @@ class LMStudioBackend(InferenceBackend):
     async def _get_available_models(self) -> List[str]:
         """Get list of models loaded in LM Studio."""
         if self.session is None:
-            print("⚠️  Session not initialized")
+            print("Session not initialized")
             return []
 
         if aiohttp is None:
-            print("⚠️  aiohttp not available")
+            print("aiohttp not available")
             return []
 
         try:
@@ -130,13 +126,13 @@ class LMStudioBackend(InferenceBackend):
                 if response.status == 200:
                     data = await response.json()
                     models = [model['id'] for model in data.get('data', [])]
-                    print(f"📋 Available models in LM Studio: {models}")
+                    print(f"Available models in LM Studio: {models}")
                     return models
                 else:
-                    print("⚠️  Could not retrieve model list from LM Studio")
+                    print("Could not retrieve model list from LM Studio")
                     return []
         except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-            print(f"⚠️  Error getting models: {e}")
+            print(f"Error getting models: {e}")
             return []
 
     async def cleanup(self) -> None:
@@ -176,15 +172,15 @@ class LMStudioBackend(InferenceBackend):
     async def _run_inference(self, prompt: str) -> str:
         """Run inference using LM Studio's API."""
         if not self.model_name or not self.session:
-            print("🚧 LM Studio model not available, using demo response")
+            print("LM Studio model not available, using demo response")
             return self._get_demo_response(prompt)
 
         if aiohttp is None:
-            print("🚧 aiohttp not available, using demo response")
+            print("aiohttp not available, using demo response")
             return self._get_demo_response(prompt)
 
         print(
-            f"🔍 Running LM Studio inference with prompt length: {len(prompt)}")
+            f"Running LM Studio inference with prompt length: {len(prompt)}")
 
         try:
             # Try completions endpoint first
@@ -196,10 +192,10 @@ class LMStudioBackend(InferenceBackend):
             return await self._try_chat_completions_endpoint(prompt)
 
         except asyncio.TimeoutError:
-            print("⏰ LM Studio request timed out, using demo response")
+            print("LM Studio request timed out, using demo response")
             return self._get_demo_response(prompt)
         except (aiohttp.ClientError, LMStudioAPIError) as e:
-            print(f"❌ LM Studio inference error: {e}")
+            print(f"LM Studio inference error: {e}")
             return self._get_demo_response(prompt)
 
     async def _try_completions_endpoint(self, prompt: str) -> Optional[str]:
@@ -228,14 +224,14 @@ class LMStudioBackend(InferenceBackend):
                         content = data['choices'][0]['text']
                         print(
                             f"✅ LM Studio response received: {len(content)} characters")
-                        print(f"🔤 Response preview: {content[:100]}...")
+                        print(f"Response preview: {content[:100]}...")
                         return self._extract_json_or_return_content(content)
                 else:
                     print(
-                        f"⚠️  Completions endpoint returned: {response.status}")
+                        f"Completions endpoint returned: {response.status}")
                     raise LMStudioAPIError("Completions endpoint failed")
         except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-            print(f"⚠️  Completions endpoint failed: {e}")
+            print(f"Completions endpoint failed: {e}")
             return None
 
     async def _try_chat_completions_endpoint(self, prompt: str) -> str:
@@ -252,7 +248,7 @@ class LMStudioBackend(InferenceBackend):
             "stop": ["}"]
         }
 
-        print("🔄 Trying chat completions endpoint...")
+        print("Trying chat completions endpoint...")
 
         async with self.session.post(
             f"{self.base_url}/chat/completions",
@@ -265,10 +261,10 @@ class LMStudioBackend(InferenceBackend):
                     content = data['choices'][0]['message']['content']
                     print(
                         f"✅ LM Studio chat response received: {len(content)} characters")
-                    print(f"🔤 Response preview: {content[:100]}...")
+                    print(f"Response preview: {content[:100]}...")
                     return self._extract_json_or_return_content(content)
                 else:
-                    print("⚠️  No choices in LM Studio response")
+                    print("No choices in LM Studio response")
                     return self._get_demo_response(prompt)
             else:
                 print(f"❌ LM Studio API error: {response.status}")
@@ -290,7 +286,7 @@ class LMStudioBackend(InferenceBackend):
                 print("✅ Valid JSON response extracted")
                 return json_part
             except json.JSONDecodeError:
-                print("⚠️  Invalid JSON in response, returning raw text")
+                print("Invalid JSON in response, returning raw text...")
         return content
 
     def _get_demo_response(self, prompt: str) -> str:
@@ -308,7 +304,7 @@ class LMStudioBackend(InferenceBackend):
         elif "translate" in prompt.lower() or "french" in prompt.lower():
             return """{
   "translated": "Ceci est le texte traduit en français.",
-  "target_language": "fr",
+  "target_language": "French",
   "preserved_terms": ["Canada Revenue Agency"],
   "confidence": 0.85,
   "cautions": ["This is a demo response from LM Studio backend"]
@@ -371,7 +367,7 @@ class LMStudioBackend(InferenceBackend):
     async def translate(
         self,
         text: str,
-        target_language: str = "fr",
+        target_language: str = "French",
         preserve_terms: bool = True,
         experimental: bool = False
     ) -> TranslationResponse:

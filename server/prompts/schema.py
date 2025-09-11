@@ -22,7 +22,7 @@ class SimplificationResponse(BaseModel):
 class TranslationResponse(BaseModel):
     """Response from text translation."""
     translated: str = Field(..., description="Translated text")
-    target_language: str = Field(..., description="Target language code")
+    target_language: str = Field(..., description="Target language")
     preserved_terms: List[str] = Field(
         default_factory=list, description="Terms preserved from original")
     confidence: float = Field(...,

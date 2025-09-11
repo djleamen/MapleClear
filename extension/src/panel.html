@@ -35,9 +35,9 @@
       <div class="translate-section">
         <label for="translate-select" class="translate-label">Translate to:</label>
         <select id="translate-select" class="translate-dropdown">
-          <option value="fr">French (Français)</option>
-          <option value="es">Spanish (Español)</option>
-          <option value="zh">Chinese (中文)</option>
+          <option value="French">French (Français)</option>
+          <option value="Spanish">Spanish (Español)</option>
+          <option value="Chinese">Chinese (中文)</option>
         </select>
         <button id="translate" class="action-button secondary">
           <span class="icon">🔄</span>
@@ -96,6 +96,11 @@
         </div>
         
         <div class="result-metadata">
+          <div class="ai-results-disclaimer">
+            <span class="disclaimer-icon">⚠️</span>
+            <span class="disclaimer-text">These AI-generated results may contain errors. Please review carefully and retry if the response looks strange.</span>
+          </div>
+          
           <div class="rationale-section hidden">
             <h4>🔍 Changes Made:</h4>
             <ul class="rationale-list"></ul>
@@ -116,6 +121,10 @@
     </div>
     
     <div class="help-text">
+      <div class="ai-disclaimer">
+        <span class="disclaimer-icon">🤖</span>
+        <span class="disclaimer-text">AI-powered results may contain errors. Please review carefully and retry if response looks strange.</span>
+      </div>
       <p>💡 <strong>Hover over ACRONYMS</strong> for instant definitions</p>
       <p>Select text and click "Simplify Selection", or use "Simplify Page" to process all content.</p>
       <p>Need help? Click the MapleClear extension icon in your browser toolbar.</p>

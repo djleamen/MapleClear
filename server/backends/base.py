@@ -49,7 +49,7 @@ class InferenceBackend(ABC):
     async def translate(
         self,
         text: str,
-        target_language: str = "fr",
+        target_language: str = "French",
         preserve_terms: bool = True,
         experimental: bool = False
     ) -> TranslationResponse:

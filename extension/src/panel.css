@@ -17,15 +17,8 @@ body {
   align-items: center;
   padding: 16px 20px;
   border-bottom: 1px solid #e5e5e5;
-  background: linear-gradient(135deg, #ff0000 0%, #ffffff 50%, #ff0000 100%);
-  background-size: 200% 200%;
-  animation: gradient 3s ease infinite;
-}
-
-@keyframes gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  background: linear-gradient(90deg, #ffffff 0%, #dc3545 100%);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .panel-title {
@@ -160,12 +153,20 @@ body {
 
 .translate-dropdown {
   width: 100%;
-  padding: 8px 12px;
+  padding: 10px 12px;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 6px;
   margin-bottom: 12px;
   font-size: 14px;
   background: white;
+  min-height: 40px;
+  transition: border-color 0.2s ease;
+}
+
+.translate-dropdown:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
 .experimental-section {
@@ -197,12 +198,20 @@ body {
 
 .indigenous-dropdown {
   width: 100%;
-  padding: 8px 12px;
+  padding: 10px 12px;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 6px;
   margin: 8px 0 12px 0;
   font-size: 14px;
   background: white;
+  min-height: 40px;
+  transition: border-color 0.2s ease;
+}
+
+.indigenous-dropdown:focus {
+  outline: none;
+  border-color: #fd7e14;
+  box-shadow: 0 0 0 2px rgba(253, 126, 20, 0.25);
 }
 
 .experimental-warning {
@@ -295,6 +304,26 @@ body {
   margin-top: 20px;
 }
 
+.ai-results-disclaimer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #856404;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.ai-results-disclaimer .disclaimer-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
 .rationale-section,
 .cautions-section {
   margin-bottom: 16px;
@@ -368,6 +397,29 @@ body {
   background: #e8f4fd;
   border-radius: 8px;
   border-left: 4px solid #007bff;
+}
+
+.ai-disclaimer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #856404;
+  line-height: 1.3;
+}
+
+.disclaimer-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.disclaimer-text {
+  font-weight: 500;
 }
 
 .help-text p {

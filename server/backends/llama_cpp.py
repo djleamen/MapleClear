@@ -1,5 +1,6 @@
 """
 llama.cpp backend implementation for MapleClear.
+This is just a sample implementation and should not be used in production
 """
 
 import json
@@ -42,10 +43,10 @@ class LlamaCppBackend(InferenceBackend):
 
         model_path = Path(self.model_path).expanduser()
         if not model_path.exists():
-            print(f"❌ Model file not found: {model_path}")
-            print("💡 Please download a model or set MAPLECLEAR_MODEL_PATH")
+            print(f"Model file not found: {model_path}")
+            print("Please download a model or set MAPLECLEAR_MODEL_PATH")
             # For demo purposes: to be removed
-            print("🚧 Running in demo mode without real model")
+            print("Running in demo mode without real model...")
 
         self.model_loaded = True
         print("✅ llama.cpp backend initialized")
@@ -122,7 +123,7 @@ class LlamaCppBackend(InferenceBackend):
         if "translate" in prompt.lower() or "french" in prompt.lower():
             return """{
   "translated": "Ceci est le texte traduit en français.",
-  "target_language": "fr",
+  "target_language": "French",
   "preserved_terms": ["Canada Revenue Agency"],
   "confidence": 0.85,
   "cautions": ["This is a demo response"]
@@ -176,7 +177,7 @@ class LlamaCppBackend(InferenceBackend):
     async def translate(
         self,
         text: str,
-        target_language: str = "fr",
+        target_language: str = "French",
         preserve_terms: bool = True,
         experimental: bool = False
     ) -> TranslationResponse:

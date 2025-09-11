@@ -7,7 +7,7 @@ echo "🍁 MapleClear Quick Setup"
 echo "========================"
 
 # Check requirements
-echo "📋 Checking requirements..."
+echo "Checking requirements..."
 
 if ! command -v node &> /dev/null; then
     echo "❌ Node.js not found. Please install Node.js 20+ from https://nodejs.org"
@@ -19,7 +19,7 @@ if ! command -v /opt/homebrew/bin/python3.9 &> /dev/null; then
     exit 1
 fi
 
-echo "✅ Node.js: $(node --version)"
+echo "Node.js: $(node --version)"
 # Find python3.9 in PATH or fallback to Homebrew path
 if command -v python3.9 &> /dev/null; then
     PYTHON=$(command -v python3.9)
@@ -30,11 +30,11 @@ else
     exit 1
 fi
 
-echo "✅ Node.js: $(node --version)"
-echo "✅ Python: $($PYTHON --version)"
+echo "Node.js: $(node --version)"
+echo "Python: $($PYTHON --version)"
 
 # Install Node.js dependencies
-echo "📦 Installing Node.js dependencies..."
+echo "Installing Node.js dependencies..."
 if command -v pnpm &> /dev/null; then
     pnpm install
     cd extension && pnpm install && cd ..
@@ -44,21 +44,21 @@ else
 fi
 
 # Set up Python virtual environment
-echo "🐍 Setting up Python environment..."
+echo "Setting up Python environment..."
 $PYTHON -m venv .venv
 source .venv/bin/activate
 
-# Install Python dependencies
-echo "📦 Installing Python dependencies..."
+# Install dependencies
+echo "Installing Python dependencies..."
 pip install --upgrade pip
 pip install -r server/requirements.txt
 
 # Create data directory
-echo "📁 Creating data directory..."
+echo "Creating data directory..."
 mkdir -p data
 
 # Setup environment file for Groq API
-echo "🔧 Setting up environment configuration..."
+echo "Setting up environment configuration..."
 if [ ! -f .env ]; then
     echo "Creating .env file..."
     cat > .env << 'EOF'
@@ -76,12 +76,10 @@ else
     echo "✅ .env file already exists"
 fi
 
-# Seed terminology database
-echo "🌱 Seeding terminology database..."
+echo "Seeding terminology database..."
 python tools/seed_terms.py --out data/terms.sqlite
 
-# Build extension
-echo "🔨 Building browser extension..."
+echo "Building browser extension..."
 cd extension
 if command -v pnpm &> /dev/null; then
     pnpm build
@@ -91,9 +89,9 @@ fi
 cd ..
 
 echo ""
-echo "✅ Setup complete!"
+echo "Setup complete!"
 echo ""
-echo "🚀 Next steps:"
+echo "Next steps:"
 echo "  1. Configure Groq API key in .env file (required for testing)"
 echo "     - Edit .env and replace 'your_groq_api_key_here' with your actual key"
 echo "  2. Start the server: make dev-server"
@@ -102,5 +100,5 @@ echo "     - Chrome: chrome://extensions -> Load unpacked -> extension/dist"
 echo "     - Firefox: about:debugging -> Load Temporary Add-on"
 echo "  4. Visit demo page: open demo/canada-benefits.html"
 echo ""
-echo "💡 Use 'make demo' for one-click demo setup"
-echo "📖 See README.md for detailed instructions"
+echo "Use 'make demo' for one-click demo setup"
+echo "See README.md for detailed instructions"

@@ -270,7 +270,7 @@ class MapleClearContentScript {
         endpoint = `${CONFIG.API_BASE}/translate`;
         body = {
           text,
-          target_language: options.targetLanguage || 'fr',
+          target_language: options.targetLanguage || 'French',
           preserve_terms: true,
           experimental: false
         };
@@ -688,7 +688,7 @@ class MapleClearContentScript {
       splitContainer.appendChild(originalPane);
       splitContainer.appendChild(processedPane);
 
-      document.body.style.overflow = 'hidden';
+      // Store original content and replace body content with split screen
       const originalContent = document.body.innerHTML;
       document.body.innerHTML = '';
       document.body.appendChild(splitContainer);
@@ -873,11 +873,121 @@ class MapleClearContentScript {
   }
 
   private formatContentForDisplay(processedText: string): string {
-    if (processedText?.trim()) {
-      return `<div style="color: #000000 !important; font-size: 18px !important; line-height: 1.6 !important; padding: 20px !important; background: #ffffff !important; border: 2px solid red !important;">${processedText.replace(/\n/g, '<br>')}</div>`;
+    if (!processedText?.trim()) {
+      return '<div style="color: #ff0000 !important; font-size: 18px !important; background: #ffff00 !important; padding: 20px !important; border: 2px solid red !important;"><em>No content was returned from the server</em></div>';
     }
     
-    return '<div style="color: #ff0000 !important; font-size: 18px !important; background: #ffff00 !important; padding: 20px !important; border: 2px solid red !important;"><em>No content was returned from the server</em></div>';
+    return this.parseMarkdown(processedText);
+  }
+
+  private parseMarkdown(content: string): string {
+    if (!content || typeof content !== 'string') {
+      return '<p>No content available</p>';
+    }
+
+    const html = this.applyInlineMarkdown(content);
+    const lines = html.split('\n');
+    const result = this.processLines(lines);
+
+    return result.join('\n') || '<p>No content available</p>';
+  }
+
+  private applyInlineMarkdown(content: string): string {
+    const html = this.escapeHtml(content);
+    
+    return html
+      .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+      .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+      .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
+      .replace(/`(.*?)`/g, '<code>$1</code>');
+  }
+
+  private processLines(lines: string[]): string[] {
+    const result: string[] = [];
+    let currentListType: string | null = null;
+
+    for (const line of lines) {
+      const { updatedListType } = this.processLine(line.trim(), result, currentListType);
+      currentListType = updatedListType;
+    }
+
+    this.closeOpenList(result, currentListType);
+    return result;
+  }
+
+  private processLine(trimmedLine: string, result: string[], currentListType: string | null): { updatedResult: string[], updatedListType: string | null } {
+    if (!trimmedLine) {
+      return this.handleEmptyLine(result, currentListType);
+    }
+
+    if (this.isHeader(trimmedLine)) {
+      return this.handleHeader(trimmedLine, result, currentListType);
+    }
+
+    const numberedMatch = trimmedLine.match(/^(\d+)\.\s+(.*)$/);
+    if (numberedMatch) {
+      return this.handleNumberedList(numberedMatch[2], result, currentListType);
+    }
+
+    const bulletMatch = trimmedLine.match(/^[-*]\s+(.*)$/);
+    if (bulletMatch) {
+      return this.handleBulletList(bulletMatch[1], result, currentListType);
+    }
+
+    return this.handleParagraph(trimmedLine, result, currentListType);
+  }
+
+  private handleEmptyLine(result: string[], currentListType: string | null): { updatedResult: string[], updatedListType: string | null } {
+    this.closeOpenList(result, currentListType);
+    return { updatedResult: result, updatedListType: null };
+  }
+
+  private isHeader(line: string): boolean {
+    return line.match(/^<h[1-6]>/) !== null;
+  }
+
+  private handleHeader(line: string, result: string[], currentListType: string | null): { updatedResult: string[], updatedListType: string | null } {
+    this.closeOpenList(result, currentListType);
+    result.push(line);
+    return { updatedResult: result, updatedListType: null };
+  }
+
+  private handleNumberedList(content: string, result: string[], currentListType: string | null): { updatedResult: string[], updatedListType: string | null } {
+    if (currentListType !== 'ol') {
+      this.closeOpenList(result, currentListType);
+      result.push('<ol>');
+    }
+    result.push(`<li>${content}</li>`);
+    return { updatedResult: result, updatedListType: 'ol' };
+  }
+
+  private handleBulletList(content: string, result: string[], currentListType: string | null): { updatedResult: string[], updatedListType: string | null } {
+    if (currentListType !== 'ul') {
+      this.closeOpenList(result, currentListType);
+      result.push('<ul>');
+    }
+    result.push(`<li>${content}</li>`);
+    return { updatedResult: result, updatedListType: 'ul' };
+  }
+
+  private handleParagraph(line: string, result: string[], currentListType: string | null): { updatedResult: string[], updatedListType: string | null } {
+    this.closeOpenList(result, currentListType);
+    result.push(`<p>${line}</p>`);
+    return { updatedResult: result, updatedListType: null };
+  }
+
+  private closeOpenList(result: string[], currentListType: string | null): void {
+    if (currentListType) {
+      result.push(`</${currentListType}>`);
+    }
+  }
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   private updatePaneContent(paneContent: HTMLElement, finalContent: string): void {
@@ -891,6 +1001,7 @@ class MapleClearContentScript {
   }
 
   private applyContentStyling(paneContent: HTMLElement): void {
+    // Apply basic styling without overriding CSS layout properties
     paneContent.style.cssText = `
       color: #343a40 !important;
       font-size: 16px !important;
@@ -901,22 +1012,22 @@ class MapleClearContentScript {
       background-color: white !important;
       min-height: 100px !important;
       width: 100% !important;
-      overflow: visible !important;
       position: relative !important;
       z-index: 1 !important;
+      word-wrap: break-word !important;
+      overflow-wrap: break-word !important;
+      padding: 20px !important;
     `;
 
+    // Don't override CSS overflow properties - let the parent .pane-content handle scrolling
+    // Only ensure visibility on all elements
     const allElements = paneContent.querySelectorAll('*');
     allElements.forEach((el: Element) => {
       const element = el as HTMLElement;
-      element.style.cssText = `
-        color: #343a40 !important;
-        visibility: visible !important;
-        display: block !important;
-        opacity: 1 !important;
-      `;
+      element.style.visibility = 'visible';
+      element.style.opacity = '1';
     });
-    console.log('🎨 Forced visibility on', allElements.length, 'child elements');
+    console.log('🎨 Applied content styling to', allElements.length, 'child elements');
   }
 
   private handleProcessingError(error: unknown, processedPane: HTMLElement): void {
