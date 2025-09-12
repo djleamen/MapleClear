@@ -10,7 +10,7 @@ A privacy-first browser extension for the [OpenAI Open Model Hackathon](https://
 
 * [Why MapleClear](#why-mapleclear)
 * [Features](#features)
-* [Screenshots and Demo Script](#screenshots-and-demo-script)
+* [Screenshots and Demo](#screenshots-and-demo)
 * [Architecture](#architecture)
 * [Local Setup](#local-setup)
 * [Usage](#usage)
@@ -68,17 +68,12 @@ Government information is essential, but it can be dense and full of jargon or a
 
 ---
 
-## Screenshots and Demo Script
-TODO
+## Screenshots and Demo
 
-**Three-minute demo flow**
+[MapleClear Demo](https://youtu.be/l6j8aqHNVWY)
 
-TODO:
-1. Open a Canada.ca page with dense paragraphs. Click **MapleClear → Simplify page**. Show side-by-side view and readability drop.
-2. Hover an acronym. Show acronym expansion and definition tooltip.
-3. Click **Translate to (Language)**. Point out that official department names are preserved.
-4. Turn off Wi-Fi. Repeat **Simplify selection** to prove offline mode. Open **System** tab to show model name and “Local mode: On”.
-5. Optional teaser, toggle **Indigenous features** to show a labeled, experimental gloss for a short phrase, along with a link to the community resource used.
+![gallery](https://github.com/user-attachments/assets/fa8e979a-421c-4bac-96e7-af1e38d1363d)
+![gallery-2](https://github.com/user-attachments/assets/665410f9-6c36-470c-84c4-860df146bf6d)
 
 ---
 
