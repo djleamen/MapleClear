@@ -118,58 +118,23 @@ Government information is essential, but it can be dense and full of jargon or a
 ```bash
 git clone https://github.com/<your-username>/mapleclear.git
 cd mapleclear
-pnpm install   # or npm install
-python -m venv .venv && source .venv/bin/activate
-pip install -r server/requirements.txt
+./setup.sh
 ```
 
-### 2) Download or point to a local model
-
-Place weights in `~/.mapleclear/models/gpt-oss-20b/` or set `MAPLECLEAR_MODEL_PATH`.
-
-Example with `llama.cpp` GGUF:
+### 2) Build and load the extension
 
 ```bash
-mkdir -p ~/.mapleclear/models/gpt-oss-20b
-# Copy or download your GGUF file into the folder above
-export MAPLECLEAR_MODEL_PATH="$HOME/.mapleclear/models/gpt-oss-20b/gpt-oss-20b-q5_k_m.gguf"
-```
-
-### 3) Start the local daemon
-
-**llama.cpp backend**
-
-```bash
-# One-time build if needed
-make -C server/backends/llama.cpp
-
-# Run the FastAPI server that wraps llama.cpp
-uvicorn server.app:app --host 127.0.0.1 --port 11434 --reload
-```
-
-**vLLM backend**
-
-```bash
-export MAPLECLEAR_BACKEND=vllm
-export MAPLECLEAR_MODEL_ID="gpt-oss-20b-fp16"
-python server/backends/vllm_runner.py --port 11434
-```
-
-You should see: `MapleClear server ready on http://127.0.0.1:11434`.
-
-### 4) Build and load the extension
-
-```bash
-pnpm build        # or npm run build
+cd server
+npm run build
 ```
 
 * Chrome: open `chrome://extensions`, enable Developer mode, **Load unpacked**, choose `extension/dist`.
 * Firefox: use `about:debugging` and **Load Temporary Add-on**.
 
-### 5) Seed the terminology cache (optional but recommended)
+### 3) Start the local daemon
 
 ```bash
-python tools/seed_terms.py --out data/terms.sqlite
+make dev-server
 ```
 
 ### One-click demo
@@ -195,37 +160,6 @@ Settings of note:
 * **Cloud assist**: allowed only if the user enables it. Clear banner displays the mode.
 * **Readability target**: choose grade 6, 7, or 8.
 * **Experimental Indigenous features**: off by default, per language toggle with info links.
-
----
-
-## Fine-tuning
-
-Two small adapters are provided using PEFT LoRA:
-
-1. **Plain-Language Style Adapter**
-
-   * Trains on public, plain-language pairs you generate from government communication guidelines and your synthetic rewrites.
-   * Target: shorter sentences, active voice, front-loaded key information, minimum jargon.
-
-2. **Inuktitut MT Adapter (experimental)**
-
-   * Phrase-level translation fine-tune using permitted parallel data, with strict data cards and evaluation.
-   * Post-edits with the base model to keep clarity. Always labeled experimental. English side by side remains visible.
-
-**Train locally**
-
-```bash
-cd finetune
-python train_plain_lora.py --base gpt-oss-20b --output runs/plain_lora
-python train_inuktitut_lora.py --base gpt-oss-20b --output runs/iu_lora
-```
-
-**Use at runtime**
-
-```bash
-export MAPLECLEAR_ADAPTERS="runs/plain_lora"
-# optional: add iu adapter when the user enables the feature
-```
 
 ---
 
@@ -262,70 +196,6 @@ Add your specific sources and licenses to:
 
 ---
 
-## Repo Structure
-
-```
-mapleclear/
-├── LICENSE                    # Apache 2.0 license
-├── README.md                  # This file
-├── Makefile                   # Build and demo commands
-├── package.json               # Root package configuration
-├── .gitignore                 # Git ignore patterns
-│
-├── extension/                 # Browser extension (MV3)
-│   ├── package.json           # Extension dependencies
-│   ├── vite.config.ts         # Build configuration
-│   ├── tsconfig.json          # TypeScript configuration
-│   ├── src/
-│   │   ├── manifest.json      # Extension manifest
-│   │   ├── background.ts      # Service worker
-│   │   ├── content-script.ts  # Page injection script
-│   │   ├── popup.html         # Extension popup
-│   │   ├── popup.ts           # Popup functionality
-│   │   ├── panel.html         # Injected panel template
-│   │   └── content-styles.css # Panel styling
-│   └── dist/                  # Built extension (generated)
-│
-├── server/                    # Local inference daemon
-│   ├── requirements.txt       # Python dependencies
-│   ├── __init__.py            # Package init
-│   ├── app.py                 # FastAPI main application
-│   ├── prompts/
-│   │   ├── __init__.py
-│   │   └── schema.py          # Request/response models
-│   └── backends/
-│       ├── __init__.py
-│       ├── base.py            # Abstract backend interface
-│       ├── llama_cpp.py       # llama.cpp implementation
-│       ├── vllm_backend.py    # vLLM implementation
-│       ├── llama.cpp/         # llama.cpp build directory
-│       └── vllm/              # vLLM configuration
-│
-├── data/                      # Local data storage
-│   └── terms.sqlite           # Terminology cache (generated)
-│
-├── data-cards/                # Data source documentation
-│   ├── terms.md               # Terminology attribution
-│   ├── plain-style.md         # Style guide sources
-│   └── indigenous.md          # Indigenous language ethics
-│
-├── finetune/                  # Model fine-tuning scripts
-│   ├── train_plain_lora.py    # Plain language adapter
-│   └── train_inuktitut_lora.py # Indigenous language adapter
-│
-├── tools/                     # Development utilities
-│   ├── seed_terms.py          # Database population
-│   └── readability.py         # Text analysis tools
-│
-├── demo/                      # Demo and testing
-│   ├── pages/                 # Sample government pages
-│   │   └── canada-benefits.html
-│   └── script.sh              # Demo automation
-│
-└── tests/                     # Test suite
-    └── test_basic.py          # Basic functionality tests
-```
-
 ### Key Components
 
 - **Extension**: Manifest V3 browser extension with React UI
@@ -336,36 +206,6 @@ mapleclear/
 - **Demo**: Sample content for testing and demonstration
 
 ---
-
-## Development
-
-**Run tests**
-
-```bash
-pnpm test
-pytest
-```
-
-**Lint and typecheck**
-
-```bash
-pnpm lint
-pnpm typecheck
-ruff check server
-mypy server
-```
-
-**Prompts and schema**
-
-* All rewrite calls return JSON:
-
-```json
-{
-  "plain": "text...",
-  "rationale": ["short bullet on change 1", "change 2"],
-  "cautions": ["any warning or uncertainty to show the user"]
-}
-```
 
 **Contributing**
 
