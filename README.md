@@ -128,7 +128,7 @@ cd extension && npm test
 open demo/canada-benefits.html
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 MapleClear/
@@ -179,7 +179,7 @@ MapleClear/
     └── canada-benefits.html  # Test page with government content
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 ```bash
