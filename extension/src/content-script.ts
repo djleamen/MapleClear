@@ -33,11 +33,11 @@ class MapleClearContentScript {
     console.log('🍁 MapleClear content script initializing...');
     
     if (!this.shouldActivate()) {
-      console.log('🚫 Not activating on this domain:', window.location.hostname);
+      console.log('🚫 Not activating on this domain:', globalThis.location.hostname);
       return;
     }
 
-    console.log('✅ Activating MapleClear on:', window.location.hostname);
+    console.log('✅ Activating MapleClear on:', globalThis.location.hostname);
     
     this.injectStyles();
     
@@ -51,7 +51,7 @@ class MapleClearContentScript {
   }
 
   private shouldActivate(): boolean {
-    const hostname = window.location.hostname;
+    const hostname = globalThis.location.hostname;
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
     const isGovernment = CONFIG.TRIGGER_DOMAINS.some(domain => 
       hostname.includes(domain)
@@ -151,7 +151,7 @@ class MapleClearContentScript {
   }
 
   private handleSelection(): void {
-    const selection = window.getSelection();
+    const selection = globalThis.getSelection();
     if (!selection || selection.isCollapsed) {
       this.currentSelection = null;
       return;
@@ -264,7 +264,7 @@ class MapleClearContentScript {
           text,
           target_grade: 7,
           preserve_acronyms: true,
-          context: window.location.hostname
+          context: globalThis.location.hostname
         };
       } else if (action === 'translate') {
         endpoint = `${CONFIG.API_BASE}/translate`;
@@ -555,8 +555,8 @@ class MapleClearContentScript {
     `;
     
     const rect = element.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    const viewportWidth = globalThis.innerWidth;
+    const viewportHeight = globalThis.innerHeight;
     
     // Add tooltip to DOM first to measure its dimensions
     tooltip.style.position = 'absolute';
@@ -568,8 +568,8 @@ class MapleClearContentScript {
     const tooltipHeight = tooltipRect.height;
     
     // Calculate optimal position
-    let top = rect.bottom + window.scrollY + 8;
-    let left = rect.left + window.scrollX;
+    let top = rect.bottom + globalThis.scrollY + 8;
+    let left = rect.left + globalThis.scrollX;
     
     // Adjust horizontal position to stay within viewport
     if (left + tooltipWidth > viewportWidth - 20) {
@@ -581,7 +581,7 @@ class MapleClearContentScript {
     
     // Adjust vertical position if tooltip would go below viewport
     if (rect.bottom + tooltipHeight > viewportHeight - 20) {
-      top = rect.top + window.scrollY - tooltipHeight - 8;
+      top = rect.top + globalThis.scrollY - tooltipHeight - 8;
     }
     
     // Final positioning
@@ -774,7 +774,7 @@ class MapleClearContentScript {
       printButton.addEventListener('click', () => {
         const processedContent = container.querySelector('.processed-pane .pane-content');
         if (processedContent) {
-          const printWindow = window.open('', '_blank');
+          const printWindow = globalThis.open('', '_blank');
           if (printWindow) {
             printWindow.document.body.innerHTML = `
               <h1>🍁 MapleClear - Processed Content</h1>
@@ -926,12 +926,12 @@ class MapleClearContentScript {
       return this.handleHeader(trimmedLine, result, currentListType);
     }
 
-    const numberedMatch = trimmedLine.match(/^(\d+)\.\s+(.*)$/);
+    const numberedMatch = RegExp(/^(\d+)\.\s+(.*)$/).exec(trimmedLine);
     if (numberedMatch) {
       return this.handleNumberedList(numberedMatch[2], result, currentListType);
     }
 
-    const bulletMatch = trimmedLine.match(/^[-*]\s+(.*)$/);
+    const bulletMatch = RegExp(/^[-*]\s+(.*)$/).exec(trimmedLine);
     if (bulletMatch) {
       return this.handleBulletList(bulletMatch[1], result, currentListType);
     }
@@ -945,7 +945,7 @@ class MapleClearContentScript {
   }
 
   private isHeader(line: string): boolean {
-    return line.match(/^<h[1-6]>/) !== null;
+    return RegExp(/^<h[1-6]>/).exec(line) !== null;
   }
 
   private handleHeader(line: string, result: string[], currentListType: string | null): { updatedResult: string[], updatedListType: string | null } {
@@ -1112,12 +1112,12 @@ class MapleClearContentScript {
 
   private getPageInfo(): any {
     return {
-      url: window.location.href,
+      url: globalThis.location.href,
       title: document.title,
-      domain: window.location.hostname,
+      domain: globalThis.location.hostname,
       hasSelection: !!this.currentSelection,
       isGovernmentSite: CONFIG.TRIGGER_DOMAINS.some(domain => 
-        window.location.hostname.includes(domain)
+        globalThis.location.hostname.includes(domain)
       )
     };
   }

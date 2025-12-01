@@ -235,6 +235,8 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 ## 🙏 Acknowledgments
 
 - OpenAI for the gpt-oss models used in development and hosting the Open Model Hackathon
+- Hackathon sponsors HuggingFace, Ollama, vLLM, NVIDIA, LM Studio
+- Groq for providing free API credits to hackathon participants (needed for my testing)
 - Government of Canada for open data and plain language initiatives
 - The open source AI community for tools and inspiration
 
