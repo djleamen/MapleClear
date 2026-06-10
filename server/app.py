@@ -123,7 +123,7 @@ class HealthResponse(BaseModel):
 @asynccontextmanager
 async def lifespan(fastapi_app: FastAPI):
     """Manage startup and shutdown events for the FastAPI app."""
-    print("🍁 Starting MapleClear server...")
+    print("\U0001F341 Starting MapleClear server...")
     print(f"Backend: {Config.BACKEND}")
     print(f"Model path: {Config.MODEL_PATH}")
     print(f"Adapters: {Config.ADAPTERS}")
@@ -181,11 +181,18 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Cross-origin access is limited to browser-extension origins (the extension
+# routes all server calls through its background worker) plus localhost pages
+# for dev/demo. Override with MAPLECLEAR_ALLOWED_ORIGIN_REGEX if needed.
+ALLOWED_ORIGIN_REGEX = os.getenv(
+    "MAPLECLEAR_ALLOWED_ORIGIN_REGEX",
+    r"^(chrome-extension|moz-extension|safari-web-extension)://[a-z0-9-]+$"
+    r"|^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for local development
-    # Credentials must stay disabled while origins is a wildcard; otherwise
-    # any website can make credentialed requests against this local API.
+    allow_origin_regex=ALLOWED_ORIGIN_REGEX,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
