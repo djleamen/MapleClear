@@ -184,7 +184,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allow all origins for local development
-    allow_credentials=True,
+    # Credentials must stay disabled while origins is a wildcard; otherwise
+    # any website can make credentialed requests against this local API.
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
