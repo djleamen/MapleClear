@@ -8,9 +8,15 @@
 declare const browser: any;
 
 interface Config {
-  API_BASE: string;
   PANEL_ID: string;
   TRIGGER_DOMAINS: string[];
+}
+
+interface ApiResponse {
+  ok: boolean;
+  status: number;
+  data?: any;
+  error?: string;
 }
 
 interface SelectionInfo {
@@ -20,7 +26,6 @@ interface SelectionInfo {
 }
 
 const CONFIG: Config = {
-  API_BASE: 'http://127.0.0.1:11434',
   PANEL_ID: 'mapleclear-panel',
   TRIGGER_DOMAINS: ['canada.ca', 'gc.ca']
 };
@@ -28,6 +33,20 @@ const CONFIG: Config = {
 class MapleClearContentScript {
   private panel: HTMLElement | null = null;
   private currentSelection: SelectionInfo | null = null;
+
+  /**
+   * Call the inference server via the background worker so requests carry
+   * the extension's origin rather than the page's; the server only allows
+   * extension-scheme and localhost origins.
+   */
+  private async apiRequest(endpoint: string, body?: unknown): Promise<ApiResponse> {
+    try {
+      return await browser.runtime.sendMessage({ type: 'API_REQUEST', endpoint, body });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Request failed';
+      return { ok: false, status: 0, error: message };
+    }
+  }
 
   public async init(): Promise<void> {
     console.log('🍁 MapleClear content script initializing...');
@@ -259,7 +278,7 @@ class MapleClearContentScript {
       let body: any;
 
       if (action === 'simplify') {
-        endpoint = `${CONFIG.API_BASE}/simplify`;
+        endpoint = '/simplify';
         body = {
           text,
           target_grade: 7,
@@ -267,7 +286,7 @@ class MapleClearContentScript {
           context: globalThis.location.hostname
         };
       } else if (action === 'translate') {
-        endpoint = `${CONFIG.API_BASE}/translate`;
+        endpoint = '/translate';
         body = {
           text,
           target_language: options.targetLanguage || 'French',
@@ -278,19 +297,13 @@ class MapleClearContentScript {
         throw new Error(`Unknown action: ${action}`);
       }
 
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body)
-      });
+      const response = await this.apiRequest(endpoint, body);
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(`HTTP ${response.status}: ${response.error ?? 'request failed'}`);
       }
 
-      const data = await response.json();
+      const data = response.data;
       this.showResult(action, data);
       
       return { success: true, data };
@@ -466,14 +479,10 @@ class MapleClearContentScript {
     this.hideAcronymTooltip();
     
     try {
-      const response = await fetch(`${CONFIG.API_BASE}/expand-acronyms`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: acronym })
-      });
-      
+      const response = await this.apiRequest('/expand-acronyms', { text: acronym });
+
       if (response.ok) {
-        const data = await response.json();
+        const data = response.data;
         const expansion = data.acronyms?.[0];
         
         if (expansion) {
@@ -598,19 +607,12 @@ class MapleClearContentScript {
   }
 
   private async expandAcronym(acronym: string): Promise<void> {
-    try {
-      const response = await fetch(`${CONFIG.API_BASE}/expand-acronyms`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: acronym })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Acronym expansion:', data);
-      }
-    } catch (error) {
-      console.log('Could not expand acronym:', error);
+    const response = await this.apiRequest('/expand-acronyms', { text: acronym });
+
+    if (response.ok) {
+      console.log('Acronym expansion:', response.data);
+    } else {
+      console.log('Could not expand acronym:', response.error ?? response.status);
       alert('MapleClear server not available. Please start the server or click the MapleClear extension icon.');
     }
   }
@@ -814,21 +816,16 @@ class MapleClearContentScript {
       ? { text: textContent, target_grade: 7, preserve_acronyms: true }
       : { text: textContent, target_language: language, preserve_terms: true };
 
-    console.log('🚀 Making API request to:', `${CONFIG.API_BASE}${endpoint}`);
+    console.log('🚀 Making API request to:', endpoint);
 
-    const response = await fetch(`${CONFIG.API_BASE}${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestData)
-    });
+    const response = await this.apiRequest(endpoint, requestData);
 
     if (!response.ok) {
       throw new Error(`Server responded with status ${response.status}`);
     }
 
-    const result = await response.json();
-    console.log('📦 API response received:', result);
-    return result;
+    console.log('📦 API response received:', response.data);
+    return response.data;
   }
 
   private extractProcessedText(result: any): string {

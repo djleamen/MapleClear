@@ -7,6 +7,15 @@
 
 import browser from 'webextension-polyfill';
 
+const API_BASE = 'http://127.0.0.1:11434';
+
+interface ApiResponse {
+  ok: boolean;
+  status: number;
+  data?: any;
+  error?: string;
+}
+
 class MapleClearBackground {
   constructor() {
     this.init();
@@ -52,15 +61,50 @@ class MapleClearBackground {
     switch (message.type) {
       case 'GET_SERVER_STATUS':
         return this.getServerStatus();
-      
+
       case 'CHECK_PERMISSIONS':
         return this.checkPermissions();
-      
+
       case 'REQUEST_PERMISSION':
         return this.requestPermission(message.permission);
-      
+
+      case 'API_REQUEST':
+        return this.proxyApiRequest(message.endpoint, message.body);
+
       default:
         console.warn('Unknown message type:', message.type);
+    }
+  }
+
+  /**
+   * Proxy inference-server calls for content scripts. Requests made here
+   * carry the extension's origin, so the server can allowlist extension
+   * schemes instead of every page origin the content script runs on.
+   */
+  private async proxyApiRequest(endpoint: unknown, body: unknown): Promise<ApiResponse> {
+    if (typeof endpoint !== 'string' || !endpoint.startsWith('/')) {
+      return { ok: false, status: 0, error: 'Invalid API endpoint' };
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}${endpoint}`, {
+        method: body === undefined ? 'GET' : 'POST',
+        headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal: AbortSignal.timeout(120000)
+      });
+
+      const data = await response.json().catch(() => undefined);
+      if (!response.ok) {
+        // Surface FastAPI's error detail so callers can show it to the user.
+        const detail = data?.detail;
+        const error = typeof detail === 'string' ? detail : `HTTP ${response.status}`;
+        return { ok: false, status: response.status, data, error };
+      }
+      return { ok: true, status: response.status, data };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Request failed';
+      return { ok: false, status: 0, error: message };
     }
   }
 
@@ -123,7 +167,7 @@ class MapleClearBackground {
     info?: any;
   }> {
     try {
-      const response = await fetch('http://127.0.0.1:11434/health', {
+      const response = await fetch(`${API_BASE}/health`, {
         method: 'GET',
         signal: AbortSignal.timeout(5000)
       });
