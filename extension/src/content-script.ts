@@ -340,23 +340,23 @@ class MapleClearContentScript {
       content.innerHTML = `
         <div class="result">
           <h3>Simplified Text</h3>
-          <div class="simplified-text">${data.plain}</div>
-          
+          <div class="simplified-text">${this.escapeHtml(data.plain)}</div>
+
           <h4>Changes Made</h4>
           <ul class="rationale">
-            ${data.rationale.map((r: string) => `<li>${r}</li>`).join('')}
+            ${data.rationale.map((r: string) => `<li>${this.escapeHtml(r)}</li>`).join('')}
           </ul>
-          
+
           <div class="reading-grade">
-            Reading level: Grade ${data.readability_grade.toFixed(1)} 
+            Reading level: Grade ${data.readability_grade.toFixed(1)}
             (was ${data.original_grade.toFixed(1)})
           </div>
-          
+
           ${data.cautions.length > 0 ? `
             <div class="cautions">
               <h4>⚠️ Please note:</h4>
               <ul>
-                ${data.cautions.map((c: string) => `<li>${c}</li>`).join('')}
+                ${data.cautions.map((c: string) => `<li>${this.escapeHtml(c)}</li>`).join('')}
               </ul>
             </div>
           ` : ''}
@@ -365,27 +365,27 @@ class MapleClearContentScript {
     } else if (action === 'translate') {
       content.innerHTML = `
         <div class="result">
-          <h3>Translation (${data.target_language.toUpperCase()})</h3>
-          <div class="translated-text">${data.translated}</div>
-          
+          <h3>Translation (${this.escapeHtml(data.target_language.toUpperCase())})</h3>
+          <div class="translated-text">${this.escapeHtml(data.translated)}</div>
+
           <div class="confidence">
             Confidence: ${(data.confidence * 100).toFixed(0)}%
           </div>
-          
+
           ${data.preserved_terms.length > 0 ? `
             <div class="preserved-terms">
               <h4>Preserved official terms:</h4>
               <ul>
-                ${data.preserved_terms.map((t: string) => `<li>${t}</li>`).join('')}
+                ${data.preserved_terms.map((t: string) => `<li>${this.escapeHtml(t)}</li>`).join('')}
               </ul>
             </div>
           ` : ''}
-          
+
           ${data.cautions.length > 0 ? `
             <div class="cautions">
               <h4>⚠️ Please note:</h4>
               <ul>
-                ${data.cautions.map((c: string) => `<li>${c}</li>`).join('')}
+                ${data.cautions.map((c: string) => `<li>${this.escapeHtml(c)}</li>`).join('')}
               </ul>
             </div>
           ` : ''}
@@ -402,7 +402,7 @@ class MapleClearContentScript {
       content.innerHTML = `
         <div class="error">
           <h3>❌ Error</h3>
-          <p>${message}</p>
+          <p>${this.escapeHtml(message)}</p>
           <p class="help-text">
             Make sure the MapleClear server is running on localhost:11434
           </p>
@@ -421,19 +421,19 @@ class MapleClearContentScript {
       const matches = Array.from(text.matchAll(acronymRegex));
       
       if (matches.length > 0) {
-        let newHTML = text;
-        
-        const sortedMatches = [...matches].reverse();
-        sortedMatches.forEach((match: RegExpExecArray) => {
+        let newHTML = '';
+        let lastIndex = 0;
+
+        matches.forEach((match: RegExpExecArray) => {
           const acronym = match[0];
           const index = match.index ?? 0;
-          
-          const before = newHTML.substring(0, index);
-          const after = newHTML.substring(index + acronym.length);
-          
-          newHTML = before + `<span class="mapleclear-acronym" data-acronym="${acronym}" title="Click to expand ${acronym}">${acronym}</span>` + after;
+
+          newHTML += this.escapeHtml(text.substring(lastIndex, index));
+          newHTML += `<span class="mapleclear-acronym" data-acronym="${acronym}" title="Click to expand ${acronym}">${acronym}</span>`;
+          lastIndex = index + acronym.length;
         });
-        
+        newHTML += this.escapeHtml(text.substring(lastIndex));
+
         if (node.parentElement && newHTML !== text) {
           const wrapper = document.createElement('span');
           wrapper.innerHTML = newHTML;
@@ -554,12 +554,15 @@ class MapleClearContentScript {
   private createTooltip(element: HTMLElement, expansion: any): void {
     const tooltip = document.createElement('div');
     tooltip.className = 'mapleclear-tooltip';
+    const safeSourceUrl = typeof expansion.source_url === 'string' && /^https?:\/\//i.test(expansion.source_url)
+      ? expansion.source_url
+      : null;
     tooltip.innerHTML = `
       <div class="tooltip-content">
-        <strong>${expansion.acronym}</strong>
-        ${expansion.expansion}
-        ${expansion.definition ? `<div class="definition">${expansion.definition}</div>` : ''}
-        ${expansion.source_url ? `<a href="${expansion.source_url}" target="_blank">More info →</a>` : ''}
+        <strong>${this.escapeHtml(expansion.acronym)}</strong>
+        ${this.escapeHtml(expansion.expansion)}
+        ${expansion.definition ? `<div class="definition">${this.escapeHtml(expansion.definition)}</div>` : ''}
+        ${safeSourceUrl ? `<a href="${this.escapeHtml(safeSourceUrl)}" target="_blank" rel="noopener noreferrer">More info →</a>` : ''}
       </div>
     `;
     
@@ -1034,7 +1037,7 @@ class MapleClearContentScript {
       paneContent.innerHTML = `
         <div class="error-message">
           <h3>❌ Processing Error</h3>
-          <p>${error instanceof Error ? error.message : 'Unknown error occurred'}</p>
+          <p>${this.escapeHtml(error instanceof Error ? error.message : 'Unknown error occurred')}</p>
           <p><small>Make sure the MapleClear server is running on port 11434</small></p>
         </div>
       `;
@@ -1050,18 +1053,18 @@ class MapleClearContentScript {
       const matches = Array.from(text.matchAll(acronymRegex));
       
       if (matches.length > 0) {
-        let newHTML = text;
-        const sortedMatches = [...matches].reverse();
-        sortedMatches.forEach((match: RegExpExecArray) => {
+        let newHTML = '';
+        let lastIndex = 0;
+        matches.forEach((match: RegExpExecArray) => {
           const acronym = match[0];
           const index = match.index ?? 0;
-          
-          const before = newHTML.substring(0, index);
-          const after = newHTML.substring(index + acronym.length);
-          
-          newHTML = before + `<span class="mapleclear-acronym" data-acronym="${acronym}" title="Hover for definition">${acronym}</span>` + after;
+
+          newHTML += this.escapeHtml(text.substring(lastIndex, index));
+          newHTML += `<span class="mapleclear-acronym" data-acronym="${acronym}" title="Hover for definition">${acronym}</span>`;
+          lastIndex = index + acronym.length;
         });
-        
+        newHTML += this.escapeHtml(text.substring(lastIndex));
+
         if (node.parentElement && newHTML !== text) {
           const wrapper = document.createElement('span');
           wrapper.innerHTML = newHTML;
