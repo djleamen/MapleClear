@@ -123,7 +123,7 @@ class HealthResponse(BaseModel):
 @asynccontextmanager
 async def lifespan(fastapi_app: FastAPI):
     """Manage startup and shutdown events for the FastAPI app."""
-    print("\U0001F341 Starting MapleClear server...")
+    print("🍁 Starting MapleClear server...")
     print(f"Backend: {Config.BACKEND}")
     print(f"Model path: {Config.MODEL_PATH}")
     print(f"Adapters: {Config.ADAPTERS}")

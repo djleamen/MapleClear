@@ -26,7 +26,7 @@ class MapleClearBackground {
     browser.runtime.onMessage.addListener(this.handleMessage.bind(this));
     this.setupContextMenus();
     this.startStatusCheck();
-    console.log('\u{1F341} MapleClear background script initialized');
+    console.log('🍁 MapleClear background script initialized');
   }
 
   private async handleToolbarClick(tab: browser.Tabs.Tab): Promise<void> {
