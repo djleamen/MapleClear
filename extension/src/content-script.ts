@@ -562,7 +562,7 @@ class MapleClearContentScript {
         <strong>${this.escapeHtml(expansion.acronym)}</strong>
         ${this.escapeHtml(expansion.expansion)}
         ${expansion.definition ? `<div class="definition">${this.escapeHtml(expansion.definition)}</div>` : ''}
-        ${safeSourceUrl ? `<a href="${this.escapeHtml(safeSourceUrl)}" target="_blank">More info →</a>` : ''}
+        ${safeSourceUrl ? `<a href="${this.escapeHtml(safeSourceUrl)}" target="_blank" rel="noopener noreferrer">More info →</a>` : ''}
       </div>
     `;
     
