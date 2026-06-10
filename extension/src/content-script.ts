@@ -8,9 +8,15 @@
 declare const browser: any;
 
 interface Config {
-  API_BASE: string;
   PANEL_ID: string;
   TRIGGER_DOMAINS: string[];
+}
+
+interface ApiResponse {
+  ok: boolean;
+  status: number;
+  data?: any;
+  error?: string;
 }
 
 interface SelectionInfo {
@@ -20,7 +26,6 @@ interface SelectionInfo {
 }
 
 const CONFIG: Config = {
-  API_BASE: 'http://127.0.0.1:11434',
   PANEL_ID: 'mapleclear-panel',
   TRIGGER_DOMAINS: ['canada.ca', 'gc.ca']
 };
@@ -29,11 +34,25 @@ class MapleClearContentScript {
   private panel: HTMLElement | null = null;
   private currentSelection: SelectionInfo | null = null;
 
+  /**
+   * Call the inference server via the background worker so requests carry
+   * the extension's origin rather than the page's; the server only allows
+   * extension-scheme and localhost origins.
+   */
+  private async apiRequest(endpoint: string, body?: unknown): Promise<ApiResponse> {
+    try {
+      return await browser.runtime.sendMessage({ type: 'API_REQUEST', endpoint, body });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Request failed';
+      return { ok: false, status: 0, error: message };
+    }
+  }
+
   public async init(): Promise<void> {
-    console.log('🍁 MapleClear content script initializing...');
+    console.log('\u{1F341} MapleClear content script initializing...');
     
     if (!this.shouldActivate()) {
-      console.log('🚫 Not activating on this domain:', globalThis.location.hostname);
+      console.log('\u{1F6AB} Not activating on this domain:', globalThis.location.hostname);
       return;
     }
 
@@ -47,7 +66,7 @@ class MapleClearContentScript {
     
     this.setupAcronymDetection();
     
-    console.log('🍁 MapleClear content script initialized successfully');
+    console.log('\u{1F341} MapleClear content script initialized successfully');
   }
 
   private shouldActivate(): boolean {
@@ -68,7 +87,7 @@ class MapleClearContentScript {
   }
 
   private async handleMessage(message: any): Promise<any> {
-    console.log('📨 Content script received message:', message);
+    console.log('\u{1F4E8} Content script received message:', message);
     
     switch (message.type) {
       case 'TOGGLE_PANEL':
@@ -84,7 +103,7 @@ class MapleClearContentScript {
         return this.translateText(message.targetLanguage);
       
       case 'CREATE_SPLIT_SCREEN':
-        console.log('🔧 Creating split screen with:', message);
+        console.log('\u{1F527} Creating split screen with:', message);
         return this.createSplitScreen(message.action, message.language, message.languageName);
       
       case 'GET_PAGE_INFO':
@@ -259,7 +278,7 @@ class MapleClearContentScript {
       let body: any;
 
       if (action === 'simplify') {
-        endpoint = `${CONFIG.API_BASE}/simplify`;
+        endpoint = '/simplify';
         body = {
           text,
           target_grade: 7,
@@ -267,7 +286,7 @@ class MapleClearContentScript {
           context: globalThis.location.hostname
         };
       } else if (action === 'translate') {
-        endpoint = `${CONFIG.API_BASE}/translate`;
+        endpoint = '/translate';
         body = {
           text,
           target_language: options.targetLanguage || 'French',
@@ -278,19 +297,13 @@ class MapleClearContentScript {
         throw new Error(`Unknown action: ${action}`);
       }
 
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body)
-      });
+      const response = await this.apiRequest(endpoint, body);
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(`HTTP ${response.status}: ${response.error ?? 'request failed'}`);
       }
 
-      const data = await response.json();
+      const data = response.data;
       this.showResult(action, data);
       
       return { success: true, data };
@@ -466,14 +479,10 @@ class MapleClearContentScript {
     this.hideAcronymTooltip();
     
     try {
-      const response = await fetch(`${CONFIG.API_BASE}/expand-acronyms`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: acronym })
-      });
-      
+      const response = await this.apiRequest('/expand-acronyms', { text: acronym });
+
       if (response.ok) {
-        const data = await response.json();
+        const data = response.data;
         const expansion = data.acronyms?.[0];
         
         if (expansion) {
@@ -538,7 +547,7 @@ class MapleClearContentScript {
     return demoExpansions[acronym] || {
       acronym,
       expansion: 'Expansion not available',
-      definition: '🍁 MapleClear can provide definitions when connected to the server. Click the extension icon to get started!'
+      definition: '\u{1F341} MapleClear can provide definitions when connected to the server. Click the extension icon to get started!'
     };
   }
 
@@ -598,19 +607,12 @@ class MapleClearContentScript {
   }
 
   private async expandAcronym(acronym: string): Promise<void> {
-    try {
-      const response = await fetch(`${CONFIG.API_BASE}/expand-acronyms`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: acronym })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Acronym expansion:', data);
-      }
-    } catch (error) {
-      console.log('Could not expand acronym:', error);
+    const response = await this.apiRequest('/expand-acronyms', { text: acronym });
+
+    if (response.ok) {
+      console.log('Acronym expansion:', response.data);
+    } else {
+      console.log('Could not expand acronym:', response.error ?? response.status);
       alert('MapleClear server not available. Please start the server or click the MapleClear extension icon.');
     }
   }
@@ -633,11 +635,11 @@ class MapleClearContentScript {
 
   private async createSplitScreen(action: string, language: string, languageName: string): Promise<{ success: boolean; error?: string }> {
     try {
-      console.log('🔧 Creating split screen:', { action, language, languageName });
+      console.log('\u{1F527} Creating split screen:', { action, language, languageName });
       this.removeSplitScreen();
       
       const mainContent = this.extractMainContentForSplitScreen();
-      console.log('📄 Extracted main content length:', mainContent?.length || 0);
+      console.log('\u{1F4C4} Extracted main content length:', mainContent?.length || 0);
       
       if (!mainContent) {
         console.error('❌ No content found to process');
@@ -652,7 +654,7 @@ class MapleClearContentScript {
       originalPane.className = 'split-pane original-pane';
       originalPane.innerHTML = `
         <div class="pane-header">
-          <h3>📄 Original</h3>
+          <h3>\u{1F4C4} Original</h3>
           <button class="close-split" title="Close split view">×</button>
         </div>
         <div class="pane-content">
@@ -664,16 +666,16 @@ class MapleClearContentScript {
       processedPane.className = 'split-pane processed-pane';
       processedPane.innerHTML = `
         <div class="pane-header">
-          <h3>${action === 'simplify' ? '✨ Simplified' : `🌍 ${languageName}`}</h3>
+          <h3>${action === 'simplify' ? '✨ Simplified' : `\u{1F30D} ${languageName}`}</h3>
           <div class="pane-actions">
-            <button class="copy-content" title="Copy content">📋</button>
-            <button class="print-content" title="Print">🖨️</button>
+            <button class="copy-content" title="Copy content">\u{1F4CB}</button>
+            <button class="print-content" title="Print">\u{1F5A8}️</button>
           </div>
         </div>
         <div class="pane-content">
           <div class="processing-indicator">
             <div class="spinner"></div>
-            <h3>🍁 MapleClear is working...</h3>
+            <h3>\u{1F341} MapleClear is working...</h3>
             <p>${action === 'simplify' ? 'Simplifying your content into plain language' : `Translating to ${languageName}`}</p>
             <ul class="processing-steps">
               <li>Analyzing content structure</li>
@@ -762,7 +764,7 @@ class MapleClearContentScript {
           navigator.clipboard.writeText(processedContent.textContent || '').then(() => {
             copyButton.textContent = '✅';
             setTimeout(() => {
-              copyButton.textContent = '📋';
+              copyButton.textContent = '\u{1F4CB}';
             }, 2000);
           });
         }
@@ -777,7 +779,7 @@ class MapleClearContentScript {
           const printWindow = globalThis.open('', '_blank');
           if (printWindow) {
             printWindow.document.body.innerHTML = `
-              <h1>🍁 MapleClear - Processed Content</h1>
+              <h1>\u{1F341} MapleClear - Processed Content</h1>
               ${processedContent.innerHTML}
             `;
             printWindow.print();
@@ -790,7 +792,7 @@ class MapleClearContentScript {
   private async processContentForSplitScreen(action: string, language: string, content: string, processedPane: HTMLElement): Promise<void> {
     try {
       const textContent = this.extractTextFromHtml(content);
-      console.log('🔧 Processing content for split screen:', { action, language, contentLength: textContent.length });
+      console.log('\u{1F527} Processing content for split screen:', { action, language, contentLength: textContent.length });
 
       const result = await this.fetchProcessedContent(action, language, textContent);
       const processedText = this.extractProcessedText(result);
@@ -814,21 +816,16 @@ class MapleClearContentScript {
       ? { text: textContent, target_grade: 7, preserve_acronyms: true }
       : { text: textContent, target_language: language, preserve_terms: true };
 
-    console.log('🚀 Making API request to:', `${CONFIG.API_BASE}${endpoint}`);
+    console.log('\u{1F680} Making API request to:', endpoint);
 
-    const response = await fetch(`${CONFIG.API_BASE}${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestData)
-    });
+    const response = await this.apiRequest(endpoint, requestData);
 
     if (!response.ok) {
       throw new Error(`Server responded with status ${response.status}`);
     }
 
-    const result = await response.json();
-    console.log('📦 API response received:', result);
-    return result;
+    console.log('\u{1F4E6} API response received:', response.data);
+    return response.data;
   }
 
   private extractProcessedText(result: any): string {
@@ -864,7 +861,7 @@ class MapleClearContentScript {
       return;
     }
 
-    console.log('🎨 Formatting content for display...');
+    console.log('\u{1F3A8} Formatting content for display...');
     const finalContent = this.formatContentForDisplay(processedText);
     
     this.updatePaneContent(paneContent as HTMLElement, finalContent);
@@ -991,13 +988,13 @@ class MapleClearContentScript {
   }
 
   private updatePaneContent(paneContent: HTMLElement, finalContent: string): void {
-    console.log('📝 Final formatted content length:', finalContent.length);
+    console.log('\u{1F4DD} Final formatted content length:', finalContent.length);
     
     paneContent.innerHTML = '';
     paneContent.innerHTML = finalContent;
     
     this.applyContentStyling(paneContent);
-    console.log('🎨 Content set, pane content innerHTML length:', paneContent.innerHTML.length);
+    console.log('\u{1F3A8} Content set, pane content innerHTML length:', paneContent.innerHTML.length);
   }
 
   private applyContentStyling(paneContent: HTMLElement): void {
@@ -1027,7 +1024,7 @@ class MapleClearContentScript {
       element.style.visibility = 'visible';
       element.style.opacity = '1';
     });
-    console.log('🎨 Applied content styling to', allElements.length, 'child elements');
+    console.log('\u{1F3A8} Applied content styling to', allElements.length, 'child elements');
   }
 
   private handleProcessingError(error: unknown, processedPane: HTMLElement): void {
