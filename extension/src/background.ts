@@ -89,13 +89,19 @@ class MapleClearBackground {
     try {
       const response = await fetch(`${API_BASE}${endpoint}`, {
         method: body === undefined ? 'GET' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
         body: body === undefined ? undefined : JSON.stringify(body),
         signal: AbortSignal.timeout(120000)
       });
 
       const data = await response.json().catch(() => undefined);
-      return { ok: response.ok, status: response.status, data };
+      if (!response.ok) {
+        // Surface FastAPI's error detail so callers can show it to the user.
+        const detail = data?.detail;
+        const error = typeof detail === 'string' ? detail : `HTTP ${response.status}`;
+        return { ok: false, status: response.status, data, error };
+      }
+      return { ok: true, status: response.status, data };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Request failed';
       return { ok: false, status: 0, error: message };
