@@ -629,7 +629,7 @@ class MapleClearContentScript {
     );
     
     let node;
-    while (node = walker.nextNode()) {
+    while ((node = walker.nextNode())) {
       textNodes.push(node as Text);
     }
     
@@ -738,7 +738,7 @@ class MapleClearContentScript {
 
     const textNodes: string[] = [];
     let node;
-    while (node = walker.nextNode()) {
+    while ((node = walker.nextNode())) {
       const text = node.textContent?.trim();
       const whitespaceRegex = /^\s*$/;
       if (text && text.length > 20 && !whitespaceRegex.test(text)) {

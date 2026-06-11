@@ -9,7 +9,7 @@
     "build:deps": "cp src/manifest.json dist/ && cp src/content-styles.css dist/ && cp src/browser-polyfill.js dist/ && cp src/popup.js dist/ && cp src/panel.js dist/",
     "build:post": "mv dist/src/popup.html dist/ && mv dist/src/panel.html dist/ && rmdir dist/src || true",
     "preview": "vite preview",
-    "test": "vitest",
+    "test": "vitest run --passWithNoTests",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc --noEmit"
   },

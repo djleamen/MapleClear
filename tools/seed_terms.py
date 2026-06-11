@@ -828,16 +828,26 @@ def create_database(db_path: Path) -> None:
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
 
+        # Drop acronyms tables created with the old single-column UNIQUE
+        # constraint, which collapsed bilingual rows; CREATE TABLE IF NOT
+        # EXISTS alone would silently keep the stale schema.
+        cursor.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='acronyms'")
+        existing = cursor.fetchone()
+        if existing and existing[0] and "UNIQUE(acronym, language)" not in existing[0]:
+            cursor.execute("DROP TABLE acronyms")
+
         # Create acronyms table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS acronyms (
                 id INTEGER PRIMARY KEY,
-                acronym TEXT UNIQUE,
+                acronym TEXT,
                 expansion TEXT,
                 definition TEXT,
                 source_url TEXT,
                 language TEXT DEFAULT 'en',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(acronym, language)
             )
         """)
 

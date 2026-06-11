@@ -1,3 +1,6 @@
+# Use bash so `source` works in recipes (default /bin/sh lacks it)
+SHELL := /usr/bin/env bash
+
 .PHONY: demo setup install build test lint clean
 
 # One-click demo setup
