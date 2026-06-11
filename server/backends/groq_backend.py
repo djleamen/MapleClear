@@ -349,21 +349,28 @@ class GroqBackend(InferenceBackend):
 
         try:
             response_data = json.loads(result)
-            # The model may answer with either "acronyms" or "expansions"
-            items = response_data.get(
-                "acronyms", response_data.get("expansions", []))
-            expansions = [
-                AcronymExpansion(
+            # The model may answer with either "acronyms" or "expansions";
+            # treat null/non-list payloads as empty rather than authoritative
+            items = (response_data.get("acronyms")
+                     or response_data.get("expansions") or [])
+            if not isinstance(items, list):
+                items = []
+            expansions = []
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                try:
+                    confidence = float(item.get("confidence", 0.5))
+                except (TypeError, ValueError):
+                    confidence = 0.5
+                expansions.append(AcronymExpansion(
                     acronym=item.get("acronym", ""),
                     expansion=item.get("expansion", ""),
                     definition=item.get("definition", ""),
-                    confidence=float(item.get("confidence", 0.5)),
+                    confidence=confidence,
                     source=item.get("source", "ai_inference"),
                     source_url=item.get("source_url")
-                )
-                for item in items
-                if isinstance(item, dict)
-            ]
+                ))
             return AcronymResponse(acronyms=expansions)
         except (json.JSONDecodeError, KeyError, TypeError, ValueError) as e:
             # Fallback for non-JSON responses
