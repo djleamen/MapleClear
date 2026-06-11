@@ -15,7 +15,8 @@ except ImportError:
     httpx = None
 
 from .base import InferenceBackend
-from ..prompts.schema import SimplificationResponse, TranslationResponse, AcronymResponse, ModelInfo
+from ..prompts.schema import (SimplificationResponse, TranslationResponse,
+                              AcronymResponse, AcronymExpansion, ModelInfo)
 
 
 class GroqError(Exception):
@@ -348,13 +349,26 @@ class GroqBackend(InferenceBackend):
 
         try:
             response_data = json.loads(result)
-            return AcronymResponse(**response_data)
-        except (json.JSONDecodeError, KeyError) as e:
+            # The model may answer with either "acronyms" or "expansions"
+            items = response_data.get(
+                "acronyms", response_data.get("expansions", []))
+            expansions = [
+                AcronymExpansion(
+                    acronym=item.get("acronym", ""),
+                    expansion=item.get("expansion", ""),
+                    definition=item.get("definition", ""),
+                    confidence=float(item.get("confidence", 0.5)),
+                    source=item.get("source", "ai_inference"),
+                    source_url=item.get("source_url")
+                )
+                for item in items
+                if isinstance(item, dict)
+            ]
+            return AcronymResponse(acronyms=expansions)
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError) as e:
             # Fallback for non-JSON responses
-            return AcronymResponse(
-                expansions=[],
-                cautions=[f"Parse error: {str(e)}"]
-            )
+            print(f"Failed to parse acronym response: {e}")
+            return AcronymResponse(acronyms=[])
 
     def _load_prompt_template(self, task: str) -> str:
         """Load prompt template for the given task."""

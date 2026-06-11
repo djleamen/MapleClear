@@ -171,8 +171,6 @@ async def lifespan(fastapi_app: FastAPI):
         # Shutdown logic
         if hasattr(fastapi_app.state, 'backend') and fastapi_app.state.backend:
             await fastapi_app.state.backend.cleanup()
-        if hasattr(fastapi_app.state, 'backend') and fastapi_app.state.backend:
-            await fastapi_app.state.backend.cleanup()
 
 app = FastAPI(
     title="MapleClear Inference Server",

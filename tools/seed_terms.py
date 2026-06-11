@@ -832,12 +832,13 @@ def create_database(db_path: Path) -> None:
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS acronyms (
                 id INTEGER PRIMARY KEY,
-                acronym TEXT UNIQUE,
+                acronym TEXT,
                 expansion TEXT,
                 definition TEXT,
                 source_url TEXT,
                 language TEXT DEFAULT 'en',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(acronym, language)
             )
         """)
 
