@@ -2,7 +2,9 @@
  * Panel functionality for MapleClear extension
  */
 
-// Request timeouts (ms) for the local inference server, matching background.ts.
+// Local inference server config, matching background.ts.
+const API_BASE = 'http://127.0.0.1:11434';
+// Request timeouts (ms) for the local inference server.
 const INFERENCE_TIMEOUT_MS = 120000;
 const HEALTH_CHECK_TIMEOUT_MS = 5000;
 
@@ -87,7 +89,7 @@ class MapleClearPanel {
 
   async checkServerStatus() {
     try {
-      const response = await fetch('http://127.0.0.1:11434/health', {
+      const response = await fetch(`${API_BASE}/health`, {
         signal: AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS)
       });
       if (!response.ok) {
@@ -229,7 +231,7 @@ class MapleClearPanel {
       preserve_terms: true
     };
 
-    const response = await fetch(`http://127.0.0.1:11434${endpoint}`, {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
