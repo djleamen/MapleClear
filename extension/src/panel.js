@@ -83,7 +83,9 @@ class MapleClearPanel {
 
   async checkServerStatus() {
     try {
-      const response = await fetch('http://127.0.0.1:11434/health');
+      const response = await fetch('http://127.0.0.1:11434/health', {
+        signal: AbortSignal.timeout(5000)
+      });
       const data = await response.json();
       
       this.updateServerStatus(true, data);
@@ -225,7 +227,8 @@ class MapleClearPanel {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(requestData)
+      body: JSON.stringify(requestData),
+      signal: AbortSignal.timeout(120000)
     });
 
     if (!response.ok) {
