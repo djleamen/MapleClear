@@ -101,7 +101,12 @@ class MapleClearPopup {
         domainElement.textContent = domain;
       }
     }).catch(() => {
-      // Ignore transient tab-query/URL errors; the domain display is optional.
+      // Privileged pages (chrome://, the New Tab page) reject the tab query or
+      // URL parse; clear the domain display rather than leaving a stale value.
+      const domainElement = document.getElementById('current-domain');
+      if (domainElement) {
+        domainElement.textContent = '';
+      }
     });
   }
 
