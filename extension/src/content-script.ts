@@ -337,6 +337,12 @@ class MapleClearContentScript {
     if (!content) return;
 
     if (action === 'simplify') {
+      const readingGrade = data.readability_grade != null
+        ? data.readability_grade.toFixed(1)
+        : 'N/A';
+      const originalGradeSuffix = data.original_grade != null
+        ? ` (was ${data.original_grade.toFixed(1)})`
+        : '';
       content.innerHTML = `
         <div class="result">
           <h3>Simplified Text</h3>
@@ -348,7 +354,7 @@ class MapleClearContentScript {
           </ul>
 
           <div class="reading-grade">
-            Reading level: Grade ${data.readability_grade != null ? data.readability_grade.toFixed(1) : 'N/A'}${data.original_grade != null ? ` (was ${data.original_grade.toFixed(1)})` : ''}
+            Reading level: Grade ${readingGrade}${originalGradeSuffix}
           </div>
 
           ${data.cautions.length > 0 ? `
