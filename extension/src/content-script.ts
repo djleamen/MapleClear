@@ -348,8 +348,7 @@ class MapleClearContentScript {
           </ul>
 
           <div class="reading-grade">
-            Reading level: Grade ${data.readability_grade.toFixed(1)}
-            (was ${data.original_grade.toFixed(1)})
+            Reading level: Grade ${data.readability_grade != null ? data.readability_grade.toFixed(1) : 'N/A'}${data.original_grade != null ? ` (was ${data.original_grade.toFixed(1)})` : ''}
           </div>
 
           ${data.cautions.length > 0 ? `
