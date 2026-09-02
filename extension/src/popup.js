@@ -88,11 +88,24 @@ class MapleClearPopup {
   updatePageInfo() {
     browser.tabs.query({ active: true, currentWindow: true }).then(tabs => {
       const tab = tabs[0];
+      // tab.url is undefined on privileged pages (chrome://, the New Tab
+      // page) or without the "tabs" permission; new URL(undefined) would
+      // throw and reject the promise, so guard before parsing.
+      if (!tab || !tab.url) {
+        return;
+      }
       const domain = new URL(tab.url).hostname;
-      
+
       const domainElement = document.getElementById('current-domain');
       if (domainElement) {
         domainElement.textContent = domain;
+      }
+    }).catch(() => {
+      // Privileged pages (chrome://, the New Tab page) reject the tab query or
+      // URL parse; clear the domain display rather than leaving a stale value.
+      const domainElement = document.getElementById('current-domain');
+      if (domainElement) {
+        domainElement.textContent = '';
       }
     });
   }
