@@ -12,19 +12,17 @@ permissions:
 jobs:
   extension:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: extension
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: extension/package-lock.json
+      # extension/ is an npm workspace of the root package, so the lockfile
+      # lives at the repo root and the install has to run from there.
       - run: npm ci
-      - run: npm run lint
-      - run: npm run build
+      - run: npm run lint:extension
+      - run: npm run build:extension
 
   server:
     runs-on: ubuntu-latest
