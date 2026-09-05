@@ -83,22 +83,33 @@ class Config:
     PORT = int(os.getenv("MAPLECLEAR_PORT", "11434"))
 
 
+# Upper bound on text accepted per request. The extension sends one section
+# at a time; anything larger is almost certainly a whole page (or abuse) and
+# would blow past the model's context window / a paid API budget.
+MAX_TEXT_CHARS = 20_000
+MAX_CONTEXT_CHARS = 2_000
+
+
 class SimplifyRequest(BaseModel):
     """Request/Response Models"""
-    text: str = Field(..., description="Text to simplify")
+    text: str = Field(..., min_length=1, max_length=MAX_TEXT_CHARS,
+                      description="Text to simplify")
     target_grade: int = Field(
-        7, description="Target reading grade level (6-8)")
+        7, ge=1, le=12, description="Target reading grade level (6-8)")
     preserve_acronyms: bool = Field(
         True, description="Preserve known acronyms")
     context: str = Field(
-        "", description="Additional context about the document")
+        "", max_length=MAX_CONTEXT_CHARS,
+        description="Additional context about the document")
 
 
 class TranslateRequest(BaseModel):
     """Request model for translation."""
-    text: str = Field(..., description="Text to translate")
+    text: str = Field(..., min_length=1, max_length=MAX_TEXT_CHARS,
+                      description="Text to translate")
     target_language: str = Field(
-        "French", description="Target language name (French, Inuktitut, etc.)")
+        "French", max_length=64,
+        description="Target language name (French, Inuktitut, etc.)")
     preserve_terms: bool = Field(
         True, description="Preserve official terminology")
     experimental: bool = Field(
@@ -107,8 +118,10 @@ class TranslateRequest(BaseModel):
 
 class AcronymRequest(BaseModel):
     """Request model for acronym expansion."""
-    text: str = Field(..., description="Text containing potential acronyms")
-    context: str = Field("", description="Context to help with disambiguation")
+    text: str = Field(..., min_length=1, max_length=MAX_TEXT_CHARS,
+                      description="Text containing potential acronyms")
+    context: str = Field("", max_length=MAX_CONTEXT_CHARS,
+                         description="Context to help with disambiguation")
 
 
 class HealthResponse(BaseModel):
@@ -237,8 +250,9 @@ async def simplify_text(
         )
         return response
     except Exception as e:
+        print(f"Simplification failed: {e}")
         raise HTTPException(
-            status_code=500, detail=f"Simplification failed: {str(e)}") from e
+            status_code=502, detail="Simplification failed") from e
 
 
 @app.post("/translate", response_model=TranslationResponse)
@@ -259,8 +273,9 @@ async def translate_text(
         )
         return response
     except Exception as e:
+        print(f"Translation failed: {e}")
         raise HTTPException(
-            status_code=500, detail=f"Translation failed: {str(e)}") from e
+            status_code=502, detail="Translation failed") from e
 
 
 @app.post("/expand-acronyms", response_model=AcronymResponse)
@@ -303,8 +318,9 @@ async def expand_acronyms(request: AcronymRequest):
         return AcronymResponse(acronyms=found_acronyms)
 
     except Exception as e:
+        print(f"Acronym expansion failed: {e}")
         raise HTTPException(
-            status_code=500, detail=f"Acronym expansion failed: {str(e)}") from e
+            status_code=500, detail="Acronym expansion failed") from e
 
 
 if Path("demo").exists():

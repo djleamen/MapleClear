@@ -43,7 +43,7 @@
   "web_accessible_resources": [
     {
       "resources": ["panel.html", "icons/*", "content-styles.css", "browser-polyfill.js", "popup.js", "panel.js"],
-      "matches": ["<all_urls>"]
+      "matches": ["https://*.canada.ca/*", "https://*.gc.ca/*", "http://localhost/*", "file:///*"]
     }
   ],
   "content_security_policy": {

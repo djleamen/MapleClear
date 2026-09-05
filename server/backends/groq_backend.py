@@ -150,7 +150,6 @@ class GroqBackend(InferenceBackend):
             data = response.json()
             print(
                 f"✅ Received response from Groq API: {len(str(data))} characters")
-            print(f"Full response data: {json.dumps(data, indent=2)}")
 
             if "choices" not in data or not data["choices"]:
                 print(
@@ -172,8 +171,7 @@ class GroqBackend(InferenceBackend):
                 print("❌ Both content and reasoning fields are empty")
                 raise GroqAPIError("No content in API response")
 
-            print(
-                f"Content extracted ({len(content)} chars): {repr(content[:500])}")
+            print(f"Content extracted ({len(content)} chars)")
 
             # Extract JSON if present, otherwise return content
             return self._extract_json_or_return_content(content)
@@ -196,8 +194,7 @@ class GroqBackend(InferenceBackend):
 
     def _extract_json_or_return_content(self, content: str) -> str:
         """Extract JSON from response content or return the content as-is."""
-        print(
-            f"Extracting JSON from content ({len(content)} chars): {repr(content[:200])}")
+        print(f"Extracting JSON from content ({len(content)} chars)")
 
         if not content or not content.strip():
             print("❌ Content is empty or whitespace only")

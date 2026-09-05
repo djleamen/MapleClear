@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  extension:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: extension
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      # The full requirements pull torch/vllm; the API layer under test only
+      # needs the web stack, so install just that to keep CI fast. ruff is
+      # pinned to the version server/requirements.txt declares so CI and a
+      # local `pip install -r server/requirements.txt` agree.
+      - run: pip install "fastapi>=0.115" "pydantic>=2.9" "uvicorn[standard]" textstat aiosqlite httpx pytest "ruff==0.1.6"
+      - run: ruff check server
+      - run: pytest server/tests -q
