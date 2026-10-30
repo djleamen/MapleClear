@@ -124,11 +124,16 @@ class AcronymRequest(BaseModel):
                          description="Context to help with disambiguation")
 
 
+# Backends that send page text to a third-party API (see backends/).
+CLOUD_BACKENDS = {"groq"}
+
+
 class HealthResponse(BaseModel):
     """Response model for health check."""
     status: str
     model_info: ModelInfo
-    local_mode: bool
+    local_mode: bool  # False when page text is sent to a third-party API
+    demo_mode: bool = False  # canned responses; nothing is sent anywhere
     backend: str
     adapters: List[str]
 
@@ -226,10 +231,12 @@ async def get_terms_db():
 async def health_check(backend: InferenceBackend = Depends(get_backend)):
     """Health check endpoint with model information."""
     model_info = await backend.get_model_info()
+    demo_mode = bool(getattr(backend, "demo_mode", False))
     return HealthResponse(
         status="healthy",
         model_info=model_info,
-        local_mode=True,
+        local_mode=demo_mode or Config.BACKEND not in CLOUD_BACKENDS,
+        demo_mode=demo_mode,
         backend=Config.BACKEND,
         adapters=Config.ADAPTERS
     )

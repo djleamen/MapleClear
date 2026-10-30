@@ -27,3 +27,17 @@ def test_translate_defaults():
     req = TranslateRequest(text="Bonjour")
     assert req.target_language == "French"
     assert req.preserve_terms is True
+
+
+def test_health_reports_where_text_is_processed(monkeypatch):
+    """Groq without an API key falls back to demo mode: nothing leaves the device."""
+    from fastapi.testclient import TestClient
+
+    from server import app as app_module
+
+    monkeypatch.setattr(app_module.Config, "BACKEND", "groq")
+    monkeypatch.delenv("GROQ", raising=False)
+    with TestClient(app_module.app) as client:
+        data = client.get("/health").json()
+    assert data["demo_mode"] is True
+    assert data["local_mode"] is True
