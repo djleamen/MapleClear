@@ -13,7 +13,7 @@ Categories: For Humanity (primary), Best Local Agent (secondary), Most Useful Fi
 - **Multi-Language Translation**: Translate to French, Spanish, Chinese, Punjabi, Arabic, and more
 - **Split-Screen View**: Compare original and simplified/translated content side-by-side
 - **Acronym Detection**: Hover tooltips for government acronyms (CRA, EI, GST, etc.)
-- **Local AI Processing**: Privacy-first approach using local inference
+- **Local or Cloud AI**: Run fully on-device (llama.cpp, LM Studio, Hugging Face, vLLM) or use the Groq API for speed. The popup always says which one is active, because with Groq the page text is sent to Groq's servers
 - **Government Site Integration**: Optimized for Canada.ca and gc.ca domains
 
 ## Architecture
