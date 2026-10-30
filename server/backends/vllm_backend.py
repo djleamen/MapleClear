@@ -28,6 +28,11 @@ class VLLMBackend(InferenceBackend):
         super().__init__(model_path, adapters or [])
         self.llm = None
         self.sampling_params = None
+        # This sample backend's simplify/translate/expand_acronyms return canned
+        # responses unconditionally (they never call _run_inference), so it is
+        # always demo mode even when vLLM loads successfully. Report that so the
+        # popup never presents sample output as real on-device inference.
+        self.demo_mode = True
 
     async def initialize(self) -> None:
         """Initialize vLLM backend."""

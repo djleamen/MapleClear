@@ -64,11 +64,19 @@ class MapleClearPopup {
         this.serverStatus = 'connected';
         // Tell people where their page text goes before they send it. The
         // server reports this, since only it knows e.g. Groq fell back to demo.
-        let where = `Ready · on this device (${data.backend})`;
-        if (data.demo_mode) {
+        // demo_mode is a field this version of the server added; an older,
+        // still-running server omits it and returns local_mode:true even for
+        // live Groq requests, so without that field we must not claim
+        // on-device processing — prompt to update the server instead.
+        let where;
+        if (typeof data.demo_mode !== 'boolean') {
+          where = 'Ready · processing location unknown — update the MapleClear server';
+        } else if (data.demo_mode) {
           where = 'Ready · demo mode (sample output, nothing is sent)';
         } else if (data.local_mode === false) {
           where = `Ready · ${data.backend} cloud (text leaves this device)`;
+        } else {
+          where = `Ready · on this device (${data.backend})`;
         }
         this.updateStatus('connected', where);
       } else {
