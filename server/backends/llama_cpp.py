@@ -47,6 +47,9 @@ class LlamaCppBackend(InferenceBackend):
             print("Please download a model or set MAPLECLEAR_MODEL_PATH")
             # For demo purposes: to be removed
             print("Running in demo mode without real model...")
+            # _run_inference serves canned output whenever the model file is
+            # absent, so report that as demo mode.
+            self.demo_mode = True
 
         self.model_loaded = True
         print("✅ llama.cpp backend initialized")

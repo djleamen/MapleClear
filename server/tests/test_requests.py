@@ -41,3 +41,18 @@ def test_health_reports_where_text_is_processed(monkeypatch):
         data = client.get("/health").json()
     assert data["demo_mode"] is True
     assert data["local_mode"] is True
+
+
+def test_health_reports_demo_mode_for_non_groq_backend(monkeypatch):
+    """A local backend with no model loaded also serves canned demo output."""
+    from fastapi.testclient import TestClient
+
+    from server import app as app_module
+
+    # vLLM is not installed in the test environment, so the backend falls back
+    # to demo responses. /health must surface that, not report it as ready.
+    monkeypatch.setattr(app_module.Config, "BACKEND", "vllm")
+    with TestClient(app_module.app) as client:
+        data = client.get("/health").json()
+    assert data["demo_mode"] is True
+    assert data["local_mode"] is True

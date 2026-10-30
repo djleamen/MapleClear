@@ -18,6 +18,11 @@ class InferenceBackend(ABC):
         self.adapters = adapters or []
         self.model = None
         self.tokenizer = None
+        # True once initialize() determines the backend will serve canned
+        # "demo" responses instead of real model output. /health reports this
+        # so the extension can warn that output is sample text, not a real
+        # simplification. Subclasses set it during initialize().
+        self.demo_mode = False
 
     @abstractmethod
     async def initialize(self) -> None:

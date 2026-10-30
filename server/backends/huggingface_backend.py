@@ -45,6 +45,7 @@ class HuggingFaceBackend(InferenceBackend):
             print(
                 "⚠️  Transformers not available. Install with: pip install transformers torch")
             print("Running in demo mode...")
+            self.demo_mode = True
             return
 
         try:
@@ -61,6 +62,7 @@ class HuggingFaceBackend(InferenceBackend):
             self.model = None
             self.tokenizer = None
             self.generator = None
+            self.demo_mode = True
 
     def _get_model_name(self) -> str:
         """Get the model name to use."""
