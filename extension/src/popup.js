@@ -8,9 +8,6 @@
  * 4. Page splits side-by-side with original (left) and processed (right)
  */
 
-// Backends that send page text to a third-party API (see server/backends/).
-const CLOUD_BACKENDS = new Set(['groq']);
-
 class MapleClearPopup {
   constructor() {
     this.selectedAction = null;
@@ -65,10 +62,14 @@ class MapleClearPopup {
       if (response.ok) {
         const data = await response.json();
         this.serverStatus = 'connected';
-        // Tell people where their page text goes before they send it.
-        const where = CLOUD_BACKENDS.has(data.backend)
-          ? `Ready · ${data.backend} cloud (text leaves this device)`
-          : `Ready · on this device (${data.backend})`;
+        // Tell people where their page text goes before they send it. The
+        // server reports this, since only it knows e.g. Groq fell back to demo.
+        let where = `Ready · on this device (${data.backend})`;
+        if (data.demo_mode) {
+          where = 'Ready · demo mode (sample output, nothing is sent)';
+        } else if (data.local_mode === false) {
+          where = `Ready · ${data.backend} cloud (text leaves this device)`;
+        }
         this.updateStatus('connected', where);
       } else {
         throw new Error('Server not responding');
