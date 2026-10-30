@@ -34,12 +34,14 @@ class VLLMBackend(InferenceBackend):
         if not VLLM_AVAILABLE:
             print("vLLM not available. Install with: pip install vllm")
             print(DEMO_MODE_MESSAGE)
+            self.demo_mode = True
             return
 
         try:
             if SamplingParams is None:
                 print("vLLM components not available")
                 print(DEMO_MODE_MESSAGE)
+                self.demo_mode = True
                 return
 
             self.sampling_params = SamplingParams(
@@ -52,11 +54,13 @@ class VLLMBackend(InferenceBackend):
             if not model_path.exists():
                 print(f"Model not found: {model_path}")
                 print(DEMO_MODE_MESSAGE)
+                self.demo_mode = True
                 return
 
             if LLM is None:
                 print("vLLM LLM class not available")
                 print(DEMO_MODE_MESSAGE)
+                self.demo_mode = True
                 return
 
             self.llm = LLM(
@@ -67,9 +71,11 @@ class VLLMBackend(InferenceBackend):
         except ImportError:
             print("❌ vLLM not installed. Install with: pip install vllm")
             print(DEMO_MODE_MESSAGE)
+            self.demo_mode = True
         except (RuntimeError, OSError, ValueError) as e:
             print(f"❌ Failed to initialize vLLM: {e}")
             print("Running in demo mode...")
+            self.demo_mode = True
 
     async def cleanup(self) -> None:
         """Clean up resources."""

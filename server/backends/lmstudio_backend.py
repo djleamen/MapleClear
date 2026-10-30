@@ -50,11 +50,13 @@ class LMStudioBackend(InferenceBackend):
         if not AIOHTTP_AVAILABLE:
             print("aiohttp not available. Install with: pip install aiohttp")
             print(DEMO_MODE_MESSAGE)
+            self.demo_mode = True
             return
 
         if aiohttp is None:
             print("aiohttp not available. Install with: pip install aiohttp")
             print(DEMO_MODE_MESSAGE)
+            self.demo_mode = True
             return
 
         try:
@@ -80,6 +82,8 @@ class LMStudioBackend(InferenceBackend):
                 print("Please load openai/gpt-oss-20b in LM Studio and restart")
                 self.model_name = None
 
+            # No usable model means requests fall back to canned demo output.
+            self.demo_mode = self.model_name is None
             print("✅ LM Studio backend initialized successfully")
 
         except LMStudioError as e:
@@ -88,6 +92,7 @@ class LMStudioBackend(InferenceBackend):
             print("Download LM Studio from: https://lmstudio.ai/")
             print(DEMO_MODE_MESSAGE)
             self.model_name = None
+            self.demo_mode = True
 
     async def _check_server_status(self) -> None:
         """Check if LM Studio server is running."""
