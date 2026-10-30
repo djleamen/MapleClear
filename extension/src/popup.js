@@ -8,6 +8,9 @@
  * 4. Page splits side-by-side with original (left) and processed (right)
  */
 
+// Backends that send page text to a third-party API (see server/backends/).
+const CLOUD_BACKENDS = new Set(['groq']);
+
 class MapleClearPopup {
   constructor() {
     this.selectedAction = null;
@@ -62,7 +65,11 @@ class MapleClearPopup {
       if (response.ok) {
         const data = await response.json();
         this.serverStatus = 'connected';
-        this.updateStatus('connected', `${data.backend} backend ready`);
+        // Tell people where their page text goes before they send it.
+        const where = CLOUD_BACKENDS.has(data.backend)
+          ? `Ready · ${data.backend} cloud (text leaves this device)`
+          : `Ready · on this device (${data.backend})`;
+        this.updateStatus('connected', where);
       } else {
         throw new Error('Server not responding');
       }
